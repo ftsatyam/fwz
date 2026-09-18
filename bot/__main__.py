@@ -44,6 +44,7 @@ async def main():
         load_configurations,
         load_settings,
         save_settings,
+        start_web_services,
         update_variables,
     )
 
@@ -77,6 +78,7 @@ async def main():
         TgClient.start_stream_bots(),
     )
     await gather(load_configurations(), update_variables())
+    await start_web_services()
 
     from .helper.ext_utils.bot_utils import git_info, search_images
     from .helper.ext_utils.files_utils import clean_all

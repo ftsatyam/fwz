@@ -228,3 +228,29 @@ async def load_configurations():
 
     from ..helper.ext_utils.tunnel_monitor import apply_tunnel_url_once
     await apply_tunnel_url_once()
+
+
+async def start_web_services():
+    if not Config.DISABLE_STREAM:
+        from .stream_server import spawn_stream_server
+
+        spawn_stream_server()
+    else:
+        LOGGER.info("Streaming is disabled. Skipping stream server.")
+
+    port = getenv("PORT", "") or "8080"
+    access_pwd = getenv("WEB_ACCESS_PASSWORD", "") or Config.WEB_ACCESS_PASSWORD
+    if not access_pwd:
+        from secrets import token_bytes
+
+        access_pwd = token_bytes(32).hex()
+        Config.WEB_ACCESS_PASSWORD = access_pwd
+
+    env = f"WEB_ACCESS_PASSWORD={access_pwd} "
+    bot_loop.create_task(
+        cmd_exec(
+            f"{env}gunicorn -k uvicorn.workers.UvicornWorker -w 1 web.wserver:app --bind 0.0.0.0:{port}",
+            shell=True,
+        )
+    )
+    LOGGER.info(f"Web server starting on 0.0.0.0:{port}")
