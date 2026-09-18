@@ -31,7 +31,6 @@ class MirrorStatus:
     STATUS_EXTRACT = "Extract"
     STATUS_SPLIT = "Split"
     STATUS_CHECK = "CheckUp"
-    STATUS_SEED = "Seed"
     STATUS_SAMVID = "SamVid"
     STATUS_CONVERT = "Convert"
     STATUS_FFMPEG = "FFmpeg"
@@ -234,10 +233,7 @@ async def get_readable_message(sid, is_user, page_no=1, status="All", page_step=
         if task.listener.is_super_chat:
             msg += f" <i>[<a href='{task.listener.message.link}'>Link</a>]</i>"
 
-        if (
-            tstatus not in [MirrorStatus.STATUS_SEED, MirrorStatus.STATUS_QUEUEUP]
-            and task.listener.progress
-        ):
+        if tstatus != MirrorStatus.STATUS_QUEUEUP and task.listener.progress:
             progress = task.progress()
             msg += f"\n┟ {get_progress_bar_string(progress)} <i>{progress}</i>"
             if task.listener.subname:
@@ -253,12 +249,6 @@ async def get_readable_message(sid, is_user, page_no=1, status="All", page_step=
             msg += f"\n┠ <b>Status</b> → <b>{tstatus}</b>"
             msg += f"\n┠ <b>Speed</b> → <i>{task.speed()}</i>"
             msg += f"\n┠ <b>Time</b> → <i>{task.eta()} of {get_readable_time(elapsed + get_raw_time(task.eta()))} ( {get_readable_time(elapsed)} )</i>"
-        elif tstatus == MirrorStatus.STATUS_SEED:
-            msg += f"\n┠ <b>Size</b> → <i>{task.size()}</i> | <b>Uploaded</b>  → <i>{task.uploaded_bytes()}</i>"
-            msg += f"\n┠ <b>Status</b> → <b>{tstatus}</b>"
-            msg += f"\n┠ <b>Speed</b> → <i>{task.seed_speed()}</i>"
-            msg += f"\n┠ <b>Ratio</b> → <i>{task.ratio()}</i>"
-            msg += f"\n┠ <b>Time</b> → <i>{task.seeding_time()}</i> | <b>Elapsed</b> → <i>{get_readable_time(elapsed)}</i>"
         else:
             msg += f"\n┠ <b>Size</b> → <i>{task.size()}</i>"
         msg += f"\n┠ <b>Engine</b> → <i>{task.engine}</i>"
