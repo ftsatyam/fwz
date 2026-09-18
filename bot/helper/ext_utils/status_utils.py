@@ -31,6 +31,7 @@ class MirrorStatus:
     STATUS_EXTRACT = "Extract"
     STATUS_SPLIT = "Split"
     STATUS_CHECK = "CheckUp"
+    STATUS_SEED = "Seed"
     STATUS_SAMVID = "SamVid"
     STATUS_CONVERT = "Convert"
     STATUS_FFMPEG = "FFmpeg"
