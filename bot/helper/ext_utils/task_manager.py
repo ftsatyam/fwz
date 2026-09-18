@@ -196,17 +196,10 @@ async def limit_checker(listener, yt_playlist=0):
         return limit_exceeded
 
     limits = [
-        (listener.is_torrent or listener.is_qbit, "TORRENT_LIMIT", "Torrent"),
-        (listener.is_mega, "MEGA_LIMIT", "Mega"),
         (listener.is_gdrive, "GD_DL_LIMIT", "GDriveDL"),
         (listener.is_clone, "CLONE_LIMIT", "Clone"),
-        (listener.is_jd, "JD_LIMIT", "JDownloader"),
-        (listener.is_nzb, "NZB_LIMIT", "SABnzbd"),
-        (listener.is_seedr, "SEEDR_LIMIT", "Seedr"),
         (listener.is_rclone, "RC_DL_LIMIT", "RCloneDL"),
-        (listener.is_ytdlp, "YTDLP_LIMIT", "YT-DLP"),
         (bool(yt_playlist), "PLAYLIST_LIMIT", "Playlist"),
-        (True, "DIRECT_LIMIT", "Direct"),
     ]
     limit_exceeded = await recurr_limits(limits)
 
@@ -270,7 +263,6 @@ async def pre_task_check(message):
             return _format_result()
         return None, None
 
-    if Config.RSS_CHAT and user_id == int(Config.RSS_CHAT):
         return None, None
 
     button = ButtonMaker()

@@ -21,12 +21,10 @@ class Config:
     DATABASE_URL = ""
     DEFAULT_UPLOAD = "rc"
     DELETE_LINKS = False
-    DEBRID_LINK_API = ""
     DISABLE_LEECH = False
     DISABLE_MIRROR = False
     DISABLE_BULK = False
     DISABLE_MULTI = False
-    DISABLE_SEED = False
     DISABLE_FF_MODE = False
     DISABLE_PLUGINS = False
     DISABLE_STREAM = False
@@ -51,7 +49,6 @@ class Config:
     GD_DESP = "Uploaded with WZ Bot"
     AUTHOR_NAME = "WZML-X"
     AUTHOR_URL = "https://t.me/WZML_X"
-    INSTADL_API = ""
     IMDB_TEMPLATE = ""
     IMAGES = []
     IMG_SEARCH = ""

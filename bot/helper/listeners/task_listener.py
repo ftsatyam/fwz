@@ -185,8 +185,7 @@ class TaskListener(TaskConfig):
             gid = download.gid()
         LOGGER.info(f"Download completed: {self.name}")
 
-        if not (self.is_torrent or self.is_qbit):
-            self.seed = False
+        self.seed = False
 
         if multi_links:
             self.seed = False
@@ -204,8 +203,6 @@ class TaskListener(TaskConfig):
             try:
                 files = await listdir(self.dir)
                 self.name = files[-1]
-                if self.name == "yt-dlp-thumb":
-                    self.name = files[0]
             except Exception as e:
                 await self.on_upload_error(str(e))
                 return
@@ -234,7 +231,7 @@ class TaskListener(TaskConfig):
         if self.join and not self.is_file:
             await join_files(up_path)
 
-        if self.extract and not self.is_nzb:
+        if self.extract:
             up_path = await self.proceed_extract(up_path, gid)
             if self.is_cancelled:
                 return
@@ -587,13 +584,6 @@ class TaskListener(TaskConfig):
                 await send_message(Config.MIRROR_LOG_ID, msg, button)
 
             await send_message(self.message, group_msg, button)
-        if self.seed:
-            await clean_target(self.up_dir)
-            async with queue_dict_lock:
-                if self.mid in non_queued_up:
-                    non_queued_up.remove(self.mid)
-            await start_from_queued()
-            return
 
         if self.pm_msg and not Config.DELETE_LINKS:
             await delete_message(self.pm_msg)

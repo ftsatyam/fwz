@@ -48,7 +48,6 @@ from .ext_utils.links_utils import (
     is_gdrive_link,
     is_rclone_path,
     is_telegram_link,
-    is_mega_link,
 )
 from .ext_utils.media_utils import (
     FFMpeg,
@@ -118,18 +117,10 @@ class TaskConfig:
         self.proceed_count = 0
         self.is_leech = False
         self.is_yt = False
-        self.is_qbit = False
-        self.is_mega = False
-        self.is_nzb = False
-        self.is_seedr = False
-        self.is_jd = False
         self.is_clone = False
         self.is_uphoster = False
         self.is_gdrive = False
         self.is_rclone = False
-        self.is_ytdlp = False
-        self.is_alldebrid = False
-        self._alldebrid_magnet_id = 0
         self.equal_splits = False
         self.transmission_mode = "bot"
         self.extract = False
@@ -148,13 +139,11 @@ class TaskConfig:
         self.force_run = False
         self.force_download = False
         self.force_upload = False
-        self.is_torrent = False
         self.as_med = False
         self.as_doc = False
         self.is_file = False
         self.bot_trans = False
         self.user_trans = False
-        self.is_rss = getattr(self.message, "_rss_trigger", False)
         self.progress = True
         self.ffmpeg_cmds = None
         self.dump_chat = 0
@@ -177,14 +166,7 @@ class TaskConfig:
         self.mode = tuple()
 
     def _set_mode_engine(self):
-        if self.is_nzb and self.link and "/getnzb/api/" in self.link:
-            try:
-                nzb_id = self.link.split("/getnzb/api/")[1].split("?")[0]
-                self.source_url = f"NZB: {nzb_id}"
-            except Exception:
-                self.source_url = "NZB Link"
-        else:
-            self.source_url = (
+        self.source_url = (
                 self.link
                 if len(self.link) > 0 and self.link.startswith("http")
                 else (
@@ -194,14 +176,13 @@ class TaskConfig:
                 )
             )
 
-        out_mode = f"#{'Leech' if self.is_leech else 'UphosterUpload' if self.is_uphoster else 'Clone' if self.is_clone else 'Mega' if self.up_dest in ('mega', 'mega:') else 'RClone' if self.up_dest.startswith('mrcc:') or is_rclone_path(self.up_dest) else 'GDrive' if self.up_dest.startswith(('mtp:', 'tp:', 'sa:')) or is_gdrive_id(self.up_dest) else 'UpHosters'}"
+        out_mode = f"#{'Leech' if self.is_leech else 'UphosterUpload' if self.is_uphoster else 'Clone' if self.is_clone else 'RClone' if self.up_dest.startswith('mrcc:') or is_rclone_path(self.up_dest) else 'GDrive' if self.up_dest.startswith(('mtp:', 'tp:', 'sa:')) or is_gdrive_id(self.up_dest) else 'UpHosters'}"
         out_mode += " (Zip)" if self.compress else " (Unzip)" if self.extract else ""
 
         self.is_rclone = is_rclone_path(self.link)
         self.is_gdrive = is_gdrive_link(self.source_url) if self.source_url else False
-        self.is_mega = is_mega_link(self.link) if self.source_url else False
 
-        in_mode = f"#{'Seedr' if self.is_seedr else 'Mega' if self.is_mega else 'qBit' if self.is_qbit else 'SABnzbd' if self.is_nzb else 'JDown' if self.is_jd else 'RCloneDL' if self.is_rclone else 'ytdlp' if self.is_ytdlp else 'GDrive' if (self.is_clone or self.is_gdrive) else 'Aria2' if (self.source_url and self.source_url != self.message.link) else 'TgMedia'}"
+        in_mode = "#RCloneDL" if self.is_rclone else "#GDrive" if (self.is_clone or self.is_gdrive) else "#TgMedia"
 
         self.mode = (in_mode, out_mode)
 
@@ -249,8 +230,6 @@ class TaskConfig:
             self.name_swap = [x.split(":") for x in self.name_swap.split("|")]
         self.excluded_extensions = self.user_dict.get("EXCLUDED_EXTENSIONS") or (
             excluded_extensions
-            if "EXCLUDED_EXTENSIONS" not in self.user_dict
-            else ["aria2", "!qB"]
         )
         if not self.rc_flags:
             if self.user_dict.get("RCLONE_FLAGS"):
@@ -258,29 +237,22 @@ class TaskConfig:
             elif "RCLONE_FLAGS" not in self.user_dict and Config.RCLONE_FLAGS:
                 self.rc_flags = Config.RCLONE_FLAGS
         if self.link not in ["rcl", "gdl"]:
-            if not self.is_jd:
-                if is_rclone_path(self.link):
-                    if not self.link.startswith("mrcc:") and self.user_dict.get(
-                        "USER_TOKENS", False
-                    ):
-                        self.link = f"mrcc:{self.link}"
-                    await self.is_token_exists(self.link, "dl")
-                elif is_gdrive_link(self.link):
-                    if not self.link.startswith(
-                        ("mtp:", "tp:", "sa:")
-                    ) and self.user_dict.get("USER_TOKENS", False):
-                        self.link = f"mtp:{self.link}"
-                    await self.is_token_exists(self.link, "dl")
+            if is_rclone_path(self.link):
+                if not self.link.startswith("mrcc:") and self.user_dict.get("USER_TOKENS", False):
+                    self.link = f"mrcc:{self.link}"
+                await self.is_token_exists(self.link, "dl")
+            elif is_gdrive_link(self.link):
+                if not self.link.startswith(("mtp:", "tp:", "sa:")) and self.user_dict.get("USER_TOKENS", False):
+                    self.link = f"mtp:{self.link}"
+                await self.is_token_exists(self.link, "dl")
         elif self.link == "rcl":
-            if not self.is_ytdlp and not self.is_jd:
-                self.link = await RcloneList(self).get_rclone_path("rcd")
-                if not is_rclone_path(self.link):
-                    raise ValueError(self.link)
+            self.link = await RcloneList(self).get_rclone_path("rcd")
+            if not is_rclone_path(self.link):
+                raise ValueError(self.link)
         elif self.link == "gdl":
-            if not self.is_ytdlp and not self.is_jd:
-                self.link = await GoogleDriveList(self).get_target_id("gdd")
-                if not is_gdrive_id(self.link):
-                    raise ValueError(self.link)
+            self.link = await GoogleDriveList(self).get_target_id("gdd")
+            if not is_gdrive_id(self.link):
+                raise ValueError(self.link)
 
         self.transmission_mode = Config.TRANSMISSION_MODE
 
@@ -378,11 +350,6 @@ class TaskConfig:
                     or self.up_dest == "gd"
                 ):
                     self.up_dest = self.user_dict.get("GDRIVE_ID") or Config.GDRIVE_ID
-                elif not self.is_uphoster and (
-                    (not self.up_dest and default_upload == "mega")
-                    or self.up_dest == "mega"
-                ):
-                    self.up_dest = "mega:"
 
                 if self.is_uphoster and not self.up_dest:
                     uphoster_service = self.user_dict.get("UPHOSTER_SERVICE", "gofile")
@@ -417,8 +384,6 @@ class TaskConfig:
                     ("mtp:", "tp:", "sa:")
                 ) and self.user_dict.get("USER_TOKENS", False):
                     self.up_dest = f"mtp:{self.up_dest}"
-            elif self.up_dest == "mega:":
-                pass
             elif is_rclone_path(self.up_dest):
                 if not self.up_dest.startswith("mrcc:") and self.user_dict.get(
                     "USER_TOKENS", False
@@ -433,7 +398,6 @@ class TaskConfig:
             if (
                 self.up_dest not in ["rcl", "gdl"]
                 and not self.is_uphoster
-                and self.up_dest != "mega:"
             ):
                 await self.is_token_exists(self.up_dest, "up")
 
@@ -731,11 +695,7 @@ class TaskConfig:
         await obj(
             client=self.client,
             message=nextmsg,
-            is_qbit=self.is_qbit,
             is_leech=self.is_leech,
-            is_jd=self.is_jd,
-            is_nzb=self.is_nzb,
-            is_seedr=self.is_seedr,
             is_uphoster=self.is_uphoster,
             same_dir=self.same_dir,
             bulk=self.bulk,
@@ -778,12 +738,8 @@ class TaskConfig:
             await obj(
                 client=self.client,
                 message=nextmsg,
-                is_qbit=self.is_qbit,
-                is_leech=self.is_leech,
-                is_jd=self.is_jd,
-                is_nzb=self.is_nzb,
-                is_seedr=self.is_seedr,
-                is_uphoster=self.is_uphoster,
+                    is_leech=self.is_leech,
+                            is_uphoster=self.is_uphoster,
                 same_dir=self.same_dir,
                 bulk=self.bulk,
                 multi_tag=self.multi_tag,

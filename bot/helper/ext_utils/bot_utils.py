@@ -234,9 +234,6 @@ def arg_parser(items, arg_base):
         "-b",
         "-e",
         "-z",
-        "-s",
-        "-j",
-        "-d",
         "-sv",
         "-ss",
         "-f",
@@ -249,17 +246,12 @@ def arg_parser(items, arg_base):
         "-ut",
         "-bt",
         "-yt",
-        "-ad",
-        "-seedr",
     }
     if Config.DISABLE_BULK and "-b" in items:
         arg_base["-b"] = False
 
     if Config.DISABLE_MULTI and "-i" in items:
         arg_base["-i"] = 0
-
-    if Config.DISABLE_SEED and "-d" in items:
-        arg_base["-d"] = False
 
     while i < total:
         part = items[i]
@@ -273,9 +265,7 @@ def arg_parser(items, arg_base):
                 and part in bool_arg_set
                 or part
                 in [
-                    "-s",
-                    "-j",
-                    "-f",
+                                            "-f",
                     "-fd",
                     "-fu",
                     "-sync",
@@ -285,8 +275,7 @@ def arg_parser(items, arg_base):
                     "-ut",
                     "-bt",
                     "-yt",
-                    "-ad",
-                ]
+                            ]
             ):
                 arg_base[part] = True
             else:

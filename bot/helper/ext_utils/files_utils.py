@@ -214,8 +214,6 @@ def get_mime_type(file_path):
 
 async def remove_excluded_files(fpath, ee):
     for root, _, files in await sync_to_async(walk, fpath):
-        if root.strip().endswith("/yt-dlp-thumb"):
-            continue
         for f in files:
             if f.strip().lower().endswith(tuple(ee)):
                 await remove(ospath.join(root, f))
@@ -234,8 +232,6 @@ async def move_and_merge(source, destination, mid):
             else:
                 await move(src_path, dest_path)
         else:
-            if item.endswith((".aria2", ".!qB")):
-                continue
             if await aiopath.exists(dest_path):
                 dest_path = f"{destination}/{mid}-{item}"
             await move(src_path, dest_path)

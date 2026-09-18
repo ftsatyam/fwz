@@ -31,35 +31,26 @@ class MirrorStatus:
     STATUS_EXTRACT = "Extract"
     STATUS_SPLIT = "Split"
     STATUS_CHECK = "CheckUp"
-    STATUS_SEED = "Seed"
     STATUS_SAMVID = "SamVid"
     STATUS_CONVERT = "Convert"
     STATUS_FFMPEG = "FFmpeg"
     STATUS_YT = "YouTube"
     STATUS_METADATA = "Metadata"
-    STATUS_SEEDR = "Seedr"
 
 
 class EngineStatus:
     def __init__(self):
         ver = bot_cache.get("eng_versions", {})
-        self.STATUS_ARIA2 = f"Aria2 v{ver.get('aria2', 'N/A')}"
         self.STATUS_AIOHTTP = f"AioHttp v{ver.get('aiohttp', 'N/A')}"
         self.STATUS_GDAPI = f"Google-API v{ver.get('gapi', 'N/A')}"
-        self.STATUS_QBIT = f"qBit v{ver.get('qBittorrent', 'N/A')}"
         self.STATUS_TGRAM = f"WzPyro v{ver.get('wzgram', 'N/A')}"
-        self.STATUS_MEGA = f"MegaSDK v{ver.get('mega', 'N/A')}"
-        self.STATUS_YTDLP = f"yt-dlp v{ver.get('yt-dlp', 'N/A')}"
         self.STATUS_FFMPEG = f"ffmpeg v{ver.get('ffmpeg', 'N/A')}"
         self.STATUS_7Z = f"7z v{ver.get('7z', 'N/A')}"
         self.STATUS_RCLONE = f"RClone v{ver.get('rclone', 'N/A')}"
-        self.STATUS_SABNZBD = f"SABnzbd+ v{ver.get('SABnzbd+', 'N/A')}"
         self.STATUS_QUEUE = "QSystem v2"
-        self.STATUS_JD = "JDownloader v2"
         self.STATUS_YT = "Youtube-Api"
         self.STATUS_METADATA = "Metadata"
         self.STATUS_UPHOSTER = "Uphoster"
-        self.STATUS_SEEDR = "Seedr"
 
 
 STATUSES = {
@@ -70,7 +61,6 @@ STATUSES = {
     "QU": MirrorStatus.STATUS_QUEUEUP,
     "AR": MirrorStatus.STATUS_ARCHIVE,
     "EX": MirrorStatus.STATUS_EXTRACT,
-    "SD": MirrorStatus.STATUS_SEED,
     "CL": MirrorStatus.STATUS_CLONE,
     "CM": MirrorStatus.STATUS_CONVERT,
     "SP": MirrorStatus.STATUS_SPLIT,
@@ -84,8 +74,6 @@ STATUSES = {
 async def get_task_by_gid(gid: str):
     async with task_dict_lock:
         for tk in task_dict.values():
-            if hasattr(tk, "seeding"):
-                await tk.update()
             if tk.gid() == gid or tk.gid().startswith(gid):
                 return tk
         return None

@@ -177,13 +177,9 @@ http_session = None
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global aria2, qbittorrent, http_session
-    aria2 = Aria2HttpClient("http://localhost:6800/jsonrpc")
-    qbittorrent = await create_client("http://localhost:8090/api/v2/")
+    global http_session
     http_session = ClientSession(auto_decompress=True)
     yield
-    await aria2.close()
-    await qbittorrent.close()
     await http_session.close()
 
 

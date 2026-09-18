@@ -1,4 +1,4 @@
-from asyncio import create_subprocess_shell, gather, sleep
+from asyncio import gather
 from importlib import import_module
 from os import environ, path as ospath, getenv
 
@@ -24,7 +24,7 @@ from .. import (
 )
 from ..helper.ext_utils.bot_utils import cmd_exec, derive_service_password
 from ..helper.ext_utils.db_handler import database
-from .config_manager import Config, BinConfig
+from .config_manager import Config
 from .tg_client import TgClient, db_partition_id
 
 
@@ -67,23 +67,13 @@ async def load_settings():
         results = await gather(
             database.db.settings.config.find_one(deploy_filter, {"_id": 0}),
             database.db.settings.files.find_one(deploy_filter, {"_id": 0}),
-            database.db.settings.aria2c.find_one(deploy_filter, {"_id": 0}),
-            database.db.settings.qbittorrent.find_one(deploy_filter, {"_id": 0})
-            if not Config.DISABLE_TORRENTS
-            else sleep(0),
-            database.db.settings.nzb.find_one(deploy_filter, {"_id": 0}),
             database.db.users[PART].find_one(),
-            database.db.rss[PART].find_one(),
         )
 
         (
             config_dict,
             pf_dict,
-            a2c_options,
-            qbit_opt,
-            nzb_opt,
             user_exists,
-            rss_exists,
         ) = results
 
         if old_config is None:
@@ -225,18 +215,6 @@ async def load_configurations():
     if not await aiopath.exists(".netrc"):
         async with aiopen(".netrc", "w"):
             pass
-
-    from .cpu import service_cores
-
-    cmd = f'chmod 600 .netrc && cp .netrc /root/.netrc && chmod +x setpkgs.sh && ./setpkgs.sh {BinConfig.ARIA2_NAME} "{service_cores()}" {Config.CPU_LIMIT}'
-    if not Config.DISABLE_NZB:
-        cmd += f" {BinConfig.SABNZBD_NAME}"
-    await (await create_subprocess_shell(cmd)).wait()
-
-    if await aiopath.exists("cfg.zip"):
-        if await aiopath.exists("/JDownloader/cfg"):
-            await rmtree("/JDownloader/cfg", ignore_errors=True)
-        await cmd_exec(["7z", "x", "cfg.zip", "-o/JDownloader"])
 
     if await aiopath.exists("accounts.zip"):
         if await aiopath.exists("accounts"):

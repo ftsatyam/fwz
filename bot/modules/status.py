@@ -10,13 +10,11 @@ from .. import (
     task_dict,
     bot_start_time,
     intervals,
-    sabnzbd_client,
     DOWNLOAD_DIR,
 )
 from ..core.config_manager import Config
 from ..helper.ext_utils.bot_utils import new_task
 from ..helper.ext_utils.status_utils import (
-    EngineStatus,
     MirrorStatus,
     get_readable_file_size,
     get_readable_time,
@@ -115,7 +113,6 @@ async def status_pages(_, query):
         tasks = {
             "Download": 0,
             "Upload": 0,
-            "Seed": 0,
             "Archive": 0,
             "Extract": 0,
             "Split": 0,
@@ -130,38 +127,11 @@ async def status_pages(_, query):
         }
         dl_speed = 0
         up_speed = 0
-        seed_speed = 0
 
         async with task_dict_lock:
             status_results = await gather(
                 *(get_download_status(download) for download in task_dict.values())
             )
-
-        eng_status = EngineStatus()
-        if any(
-            eng in (eng_status.STATUS_ARIA2, eng_status.STATUS_QBIT)
-            for _, __, eng in status_results
-        ):
-            dl_speed, seed_speed = await TorrentManager.overall_speed()
-
-        if any(eng == eng_status.STATUS_SABNZBD for _, __, eng in status_results):
-            if not Config.DISABLE_NZB and sabnzbd_client.LOGGED_IN:
-                dl_speed += (
-                    int(
-                        float(
-                            (await sabnzbd_client.get_downloads())["queue"].get(
-                                "kbpersec", "0"
-                            )
-                        )
-                    )
-                    * 1024
-                )
-
-        if any(eng == eng_status.STATUS_JD for _, __, eng in status_results):
-            if not Config.DISABLE_JD and jdownloader.is_connected:
-                dl_speed += (
-                    await jdownloader.device.downloadcontroller.get_speed_in_bytes()
-                )
 
         for status, speed, _ in status_results:
             match status:
@@ -172,8 +142,6 @@ async def status_pages(_, query):
                 case MirrorStatus.STATUS_UPLOAD:
                     tasks["Upload"] += 1
                     up_speed += speed_string_to_bytes(speed)
-                case MirrorStatus.STATUS_SEED:
-                    tasks["Seed"] += 1
                 case MirrorStatus.STATUS_ARCHIVE:
                     tasks["Archive"] += 1
                 case MirrorStatus.STATUS_EXTRACT:
@@ -202,7 +170,7 @@ async def status_pages(_, query):
         msg = f"""㊂ <b>Tasks Overview</b> :
         
 ┎ <b>Download:</b> {tasks["Download"]} | <b>Upload:</b> {tasks["Upload"]}
-┠ <b>Seed:</b> {tasks["Seed"]} | <b>Archive:</b> {tasks["Archive"]}
+<b>Archive:</b> {tasks["Archive"]}
 ┠ <b>Extract:</b> {tasks["Extract"]} | <b>Split:</b> {tasks["Split"]}
 ┠ <b>QueueDL:</b> {tasks["QueueDl"]} | <b>QueueUP:</b> {tasks["QueueUp"]}
 ┠ <b>Clone:</b> {tasks["Clone"]} | <b>CheckUp:</b> {tasks["CheckUp"]}
@@ -211,7 +179,7 @@ async def status_pages(_, query):
 │
 ┟ <b>Total Download Speed:</b> {get_readable_file_size(dl_speed)}/s
 ┠ <b>Total Upload Speed:</b> {get_readable_file_size(up_speed)}/s
-┖ <b>Total Seeding Speed:</b> {get_readable_file_size(seed_speed)}/s
+┖ <b>Total Download Speed:</b> {get_readable_file_size(dl_speed)}/s
 """
         button = ButtonMaker()
         button.data_button("Back", f"status {data[1]} ref")

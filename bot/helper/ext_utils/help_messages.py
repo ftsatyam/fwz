@@ -258,30 +258,6 @@ Here I will explain how to use mltb.* which is reference to files you want to wo
 3. Third cmd: the input is mltb.m4a so this cmd will work only on m4a audios and the output is mltb.mp3 so the output extension is mp3.
 4. Fourth cmd: the input is mltb.audio so this cmd will work on all audios and the output is mltb.mp3 so the output extension is mp3."""
 
-alldebrid_arg = """<b>AllDebrid Unlock</b>: -ad
-
-/cmd link -ad
-Resolves filehost links (1fichier, rapidgator, mega, etc.) via the
-AllDebrid API before handing off to the existing direct downloader.
-
-Magnet/torrent inputs are also routed through AllDebrid when -ad
-is set: the bot uploads the magnet (or replied <code>.torrent</code>
-file), waits for AllDebrid to finish torrenting, then downloads each
-file directly from AllDebrid CDNs. This bypasses aria2/qBittorrent
-entirely so dead torrents finish faster on a debrid plan.
-
-Requires <code>ALLDEBRID_API_KEY</code> in the bot configuration."""
-
-seedr_arg = """<b>Seedr Cloud</b>: -seedr
-
-/cmd magnet -seedr
-Sends the magnet to your Seedr.cc cloud account, waits for it to
-finish there, then downloads the finished files over plain HTTP.
-Useful when the torrent is slow or blocked on your server.
-
-Only works with magnet links and .torrent URLs.
-Set SEEDR_EMAIL and SEEDR_PASSWORD in /usetting or the bot config."""
-
 metadata = """<b>Metadata</b>: -meta
 
 Apply custom metadata to media files using pipe (|) separator.
@@ -345,8 +321,6 @@ MIRROR_HELP_DICT = {
     "DL-Auth": "<b>Direct link authorization</b>: -au -ap\n\n/cmd link -au username -ap password",
     "Headers": "<b>Direct link custom headers</b>: -h\n\n/cmd link -h key: value key1: value1",
     "Extract/Zip": extract_zip,
-    "Select-Files": "<b>Bittorrent/JDownloader/Sabnzbd File Selection</b>: -s\n\n/cmd link -s or by replying to file/link",
-    "Torrent-Seed": seed,
     "Multi-Link": multi_link,
     "Same-Directory": same_dir,
     "Thumb": thumb,
@@ -368,8 +342,6 @@ MIRROR_HELP_DICT = {
     "Leech-Type": leech_as,
     "FFmpeg-Cmds": ffmpeg_cmds,
     "Metadata": metadata,
-    "AllDebrid": alldebrid_arg,
-    "Seedr": seedr_arg,
 }
 
 CLONE_HELP_DICT = {
@@ -379,30 +351,6 @@ CLONE_HELP_DICT = {
     "Gdrive": gdrive,
     "Rclone": rclone_cl,
 }
-
-RSS_HELP_MESSAGE = """
-Use this format to add feed url:
-Title1 link (required)
-Title2 link -c cmd -inf xx -exf xx
-Title3 link -c cmd -d ratio:time -z password
-
--c command -up mrcc:remote:path/subdir -rcf --buffer-size:8M|key|key:value
--inf For included words filter.
--exf For excluded words filter.
--stv true or false (sensitive filter)
-
-Example: Title https://www.rss-url.com -inf 1080 or 720 or 144p|mkv or mp4|hevc -exf flv or web|xxx
-This filter will parse links that its titles contain `(1080 or 720 or 144p) and (mkv or mp4) and hevc` and doesn't contain (flv or web) and xxx words. You can add whatever you want.
-
-Another example: -inf  1080  or 720p|.web. or .webrip.|hevc or x264. This will parse titles that contain ( 1080  or 720p) and (.web. or .webrip.) and (hevc or x264). I have added space before and after 1080 to avoid wrong matching. If this `10805695` number in title it will match 1080 if added 1080 without spaces after it.
-
-Filter Notes:
-1. | means and.
-2. Add `or` between similar keys, you can add it between qualities or between extensions, so don't add filter like this f: 1080|mp4 or 720|web because this will parse 1080 and (mp4 or 720) and web ... not (1080 and mp4) or (720 and web).
-3. You can add `or` and `|` as much as you want.
-4. Take a look at the title if it has a static special character after or before the qualities or extensions or whatever and use them in the filter to avoid wrong match.
-Timeout: 60 sec.
-"""
 
 PASSWORD_ERROR_MESSAGE = """
 <b>This link requires a password!</b>
@@ -417,23 +365,16 @@ def get_bot_commands():
 
     static_commands = {
         "Mirror": "[link/file] Mirror to Upload Destination",
-        "QbMirror": "[magnet/torrent] Mirror to Upload Destination using qbit",
-        "Ytdl": "[link] Mirror YouTube, m3u8, Social Media and yt-dlp supported urls",
         "UpHoster": "[link/file] Upload to DDL Servers",
         "Leech": "[link/file] Leech files to Upload to Telegram",
-        "QbLeech": "[magnet/torrent] Leech files to Upload to Telegram using qbit",
-        "YtdlLeech": "[link] Leech YouTube, m3u8, Social Media and yt-dlp supported urls",
         "Clone": "[link] Clone files/folders to GDrive",
         "UserSet": "User personal settings",
         "ForceStart": "[gid/reply] Force start from queued task",
         "Count": "[link] Count no. of files/folders in GDrive",
         "List": "[query] Search any Text which is available in GDrive",
-        "Search": "[query] Search torrents via Qbit Plugins",
-        "Select": "[gid/reply] Select files for NZB, Aria2, Qbit Tasks",
         "Ping": "Ping Bot to test Response Speed",
         "Status": "[id/me] Tasks Status of Bot",
         "Stats": "Bot, OS, Repo & System full Statistics",
-        "Rss": "User RSS Management Settings",
         "CancelAll": "Cancel all Tasks on the Bot",
         "Help": "Detailed help usage of the WZ Bot",
         "BotSet": "[SUDO] Bot Management Settings",
@@ -481,28 +422,10 @@ def get_help_string():
 
         if key == "Mirror":
             help_lines.append(f"{cmd_str}: Start mirroring to cloud.")
-        elif key == "QbMirror":
-            help_lines.append(f"{cmd_str}: Start Mirroring to cloud using qBittorrent.")
-        elif key == "JdMirror":
-            help_lines.append(f"{cmd_str}: Start Mirroring to cloud using JDownloader.")
-        elif key == "NzbMirror":
-            help_lines.append(f"{cmd_str}: Start Mirroring to cloud using Sabnzbd.")
-        elif key == "Ytdl":
-            help_lines.append(f"{cmd_str}: Mirror yt-dlp supported link.")
         elif key == "UpHoster":
             help_lines.append(f"{cmd_str}: Upload to DDL Servers.")
         elif key == "Leech":
             help_lines.append(f"{cmd_str}: Start leeching to Telegram.")
-        elif key == "QbLeech":
-            help_lines.append(f"{cmd_str}: Start leeching using qBittorrent.")
-        elif key == "JdLeech":
-            help_lines.append(f"{cmd_str}: Start leeching using JDownloader.")
-        elif key == "NzbLeech":
-            help_lines.append(f"{cmd_str}: Start leeching using Sabnzbd.")
-        elif key == "SeedrLink":
-            help_lines.append(f"{cmd_str}: Get direct Seedr HTTP download links.")
-        elif key == "YtdlLeech":
-            help_lines.append(f"{cmd_str}: Leech yt-dlp supported link.")
         elif key == "Clone":
             help_lines.append(
                 f"{cmd_str} [drive_url]: Copy file/folder to Google Drive."
@@ -519,10 +442,6 @@ def get_help_string():
             help_lines.append(f"{cmd_str} [query]: Users settings.")
         elif key == "BotSet":
             help_lines.append(f"{cmd_str} [query]: Bot settings.")
-        elif key == "Select":
-            help_lines.append(
-                f"{cmd_str}: Select files from torrents or nzb by gid or reply."
-            )
         elif key == "CancelTask":
             help_lines.append(f"{cmd_str} [gid]: Cancel task by gid or reply.")
         elif key == "ForceStart":
@@ -531,8 +450,6 @@ def get_help_string():
             help_lines.append(f"{cmd_str} [query]: Cancel all [status] tasks.")
         elif key == "List":
             help_lines.append(f"{cmd_str} [query]: Search in Google Drive(s).")
-        elif key == "Search":
-            help_lines.append(f"{cmd_str} [query]: Search for torrents with API.")
         elif key == "Status":
             help_lines.append(f"{cmd_str}: Shows a status of all the downloads.")
         elif key == "Stats":
@@ -589,8 +506,6 @@ def get_help_string():
             help_lines.append(
                 f"/{BotCommands.ClearLocalsCommand}: Clear {BotCommands.AExecCommand} or {BotCommands.ExecCommand} locals (Only Owner)."
             )
-        elif key == "Rss":
-            help_lines.append(f"/{BotCommands.RssCommand}: RSS Menu.")
         elif key in BOT_COMMANDS:
             help_lines.append(f"{cmd_str}: {BOT_COMMANDS[key]}")
 

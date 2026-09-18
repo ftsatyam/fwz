@@ -144,19 +144,13 @@ class Mirror(TaskListener):
             )
             return
 
-        if Config.DISABLE_SEED and args.get("-d", False):
-            await send_message(
-                self.message,
-                "Seeding is currently disabled. Please try without the -d flag.",
-            )
-            return
 
         if Config.DISABLE_FF_MODE and args.get("-ff"):
             await send_message(self.message, "FFmpeg commands are currently disabled.")
             return
 
         self.select = args["-s"]
-        self.seed = args["-d"]
+        self.seed = False
         self.name = args["-n"]
         self.up_dest = args["-up"]
         self.dump_dest = args["-ud"]
@@ -307,16 +301,12 @@ class Mirror(TaskListener):
             await Mirror(
                 self.client,
                 nextmsg,
-                self.is_qbit,
-                self.is_leech,
-                self.is_jd,
-                self.is_nzb,
-                self.is_seedr,
-                self.is_uphoster,
-                self.same_dir,
-                self.bulk,
-                self.multi_tag,
-                self.options,
+                is_leech=self.is_leech,
+                is_uphoster=self.is_uphoster,
+                same_dir=self.same_dir,
+                bulk=self.bulk,
+                multi_tag=self.multi_tag,
+                options=self.options,
             ).new_event()
             return
 
@@ -393,12 +383,3 @@ async def leech(client, message):
 
 async def uphoster(client, message):
     bot_loop.create_task(Mirror(client, message, is_uphoster=True).new_event())
-
-    nzb_id = hydra_nzb_id(message, "/uphoster", force_extract=False)
-    if nzb_id and Config.DISABLE_NZB:
-        await message.reply("SABnzbd is currently disabled by the Bot Owner.")
-        return
-    mirror_task = Mirror(client, message, is_uphoster=True, is_nzb=bool(nzb_id))
-    if nzb_id:
-        mirror_task.nzb_id = nzb_id
-    bot_loop.create_task(mirror_task.new_event())

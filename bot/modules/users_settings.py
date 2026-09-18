@@ -68,13 +68,10 @@ ffset_options = [
 advanced_options = [
     "EXCLUDED_EXTENSIONS",
     "NAME_SWAP",
-    "YT_DLP_OPTIONS",
     "UPLOAD_PATHS",
     "USER_COOKIE_FILE",
 ]
 yt_options = ["YT_DESP", "YT_TAGS", "YT_CATEGORY_ID", "YT_PRIVACY_STATUS"]
-mega_options = ["MEGA_EMAIL", "MEGA_PASSWORD"]
-seedr_options = ["SEEDR_EMAIL", "SEEDR_PASSWORD", "SEEDR_DELETE_FOLDER"]
 
 user_settings_text = {
     "THUMBNAIL": (
@@ -314,26 +311,6 @@ Here I will explain how to use mltb.* which is reference to files you want to wo
         "String",
         "VikingFile folder name/path. Leave empty to upload to root.",
         "<i>Send your VikingFile folder name/path. Leave empty to upload to root.</i> \n┖ <b>Time Left :</b> <code>60 sec</code>",
-    ),
-    "MEGA_EMAIL": (
-        "String",
-        "Your Mega.nz account email for per-user Mega downloads & uploads.",
-        "<i>Send your Mega.nz email address.</i> \n┖ <b>Time Left :</b> <code>60 sec</code>",
-    ),
-    "MEGA_PASSWORD": (
-        "String",
-        "Your Mega.nz account password for per-user Mega downloads & uploads.",
-        "<i>Send your Mega.nz account password.</i> \n┖ <b>Time Left :</b> <code>60 sec</code>",
-    ),
-    "SEEDR_EMAIL": (
-        "String",
-        "Your Seedr.cc account email for per-user Seedr cloud downloads.",
-        "<i>Send your Seedr.cc email address.</i> \n┖ <b>Time Left :</b> <code>60 sec</code>",
-    ),
-    "SEEDR_PASSWORD": (
-        "String",
-        "Your Seedr.cc account password for per-user Seedr cloud downloads.",
-        "<i>Send your Seedr.cc account password.</i> \n┖ <b>Time Left :</b> <code>60 sec</code>",
     ),
     "DRIVE_CAT": (
         "Dict",
@@ -866,9 +843,6 @@ async def get_user_settings(from_user, stype="main"):
             sd_msg = "Disabled"
 
         buttons.data_button("YT Up Tools", f"userset {user_id} yttools")
-        buttons.data_button("Mega Tools", f"userset {user_id} mega")
-        if not Config.DISABLE_SEEDR:
-            buttons.data_button("Seedr Tools", f"userset {user_id} seedr")
         if Config.DRIVE_CATEGORY_MODE:
             dc_enabled = user_dict.get("drive_cat_mode", False)
             buttons.data_button(
@@ -888,385 +862,6 @@ async def get_user_settings(from_user, stype="main"):
 ┖ <b>Bot Stop Duplicate</b> → <b>{sd_msg}</b>
 """
 
-    elif stype == "mega":
-        mega_email = user_dict.get("MEGA_EMAIL", "")
-        mega_password = user_dict.get("MEGA_PASSWORD", "")
-        has_creds = bool(mega_email and mega_password)
-        masked_pass = (
-            (
-                mega_password[:2] + "*" * (len(mega_password) - 4) + mega_password[-2:]
-                if len(mega_password) > 6
-                else "****"
-            )
-            if mega_password
-            else ""
-        )
-
-        buttons.data_button("Mega Email", f"userset {user_id} menu MEGA_EMAIL")
-        if mega_email:
-            buttons.data_button(
-                "Mega Password", f"userset {user_id} menu MEGA_PASSWORD"
-            )
-
-        if has_creds:
-            buttons.data_button(
-                "Remove Account",
-                f"userset {user_id} remove MEGA_EMAIL",
-                position="l_body",
-            )
-
-        buttons.data_button("Back", f"userset {user_id} back mirror", "footer")
-        buttons.data_button(
-            "Close", f"userset {user_id} close", "footer", style=ButtonStyle.DANGER
-        )
-        btns = buttons.build_menu(1)
-
-        email_display = mega_email or "Not Set"
-        pass_display = masked_pass if mega_password else "Not Set"
-        account_status = "✓ Configured" if has_creds else "❌ Not Configured"
-        text = f"""⌬ <b>Mega Tools :</b>
-┟ <b>Name</b> → {user_name}
-┃
-┠ <b>Mega Email</b> → <code>{email_display}</code>
-┠ <b>Mega Password</b> → <code>{pass_display}</code>
-┖ <b>Account</b> → {account_status}"""
-
-    elif stype == "seedr":
-        seedr_email = user_dict.get("SEEDR_EMAIL", "")
-        seedr_password = user_dict.get("SEEDR_PASSWORD", "")
-        seedr_delete = (
-            user_dict.get("SEEDR_DELETE_FOLDER")
-            if "SEEDR_DELETE_FOLDER" in user_dict
-            else Config.SEEDR_DELETE_FOLDER
-        )
-        has_creds = bool(seedr_email and seedr_password)
-        masked_pass = (
-            (
-                seedr_password[:2]
-                + "*" * (len(seedr_password) - 4)
-                + seedr_password[-2:]
-                if len(seedr_password) > 6
-                else "****"
-            )
-            if seedr_password
-            else ""
-        )
-
-        buttons.data_button("Seedr Email", f"userset {user_id} menu SEEDR_EMAIL")
-        if seedr_email:
-            buttons.data_button(
-                "Seedr Password", f"userset {user_id} menu SEEDR_PASSWORD"
-            )
-
-        buttons.data_button(
-            f"Delete Folder: {'ON' if seedr_delete else 'OFF'}",
-            f"userset {user_id} tog SEEDR_DELETE_FOLDER {'f' if seedr_delete else 't'}",
-        )
-
-        if has_creds:
-            buttons.data_button(
-                "Clear Storage",
-                f"userset {user_id} clear_seedr",
-                position="l_body",
-            )
-            buttons.data_button(
-                "Remove Account",
-                f"userset {user_id} remove SEEDR_EMAIL",
-                position="l_body",
-            )
-
-        buttons.data_button("Back", f"userset {user_id} back mirror", "footer")
-        buttons.data_button(
-            "Close", f"userset {user_id} close", "footer", style=ButtonStyle.DANGER
-        )
-        btns = buttons.build_menu(1)
-
-        email_display = seedr_email or "Not Set"
-        pass_display = masked_pass if seedr_password else "Not Set"
-        account_status = "✓ Configured" if has_creds else "❌ Not Configured"
-        delete_display = "Enabled" if seedr_delete else "Disabled"
-        text = f"""⌬ <b>Seedr Tools :</b>
-┟ <b>Name</b> → {user_name}
-┃
-┠ <b>Seedr Email</b> → <code>{email_display}</code>
-┠ <b>Seedr Password</b> → <code>{pass_display}</code>
-┠ <b>Delete Folder</b> → {delete_display}
-┖ <b>Account</b> → {account_status}"""
-
-    elif stype == "ffset":
-        buttons.data_button(
-            "FFmpeg Cmds", f"userset {user_id} menu FFMPEG_CMDS", "header"
-        )
-        if user_dict.get("FFMPEG_CMDS", False):
-            ffc = user_dict["FFMPEG_CMDS"]
-        elif "FFMPEG_CMDS" not in user_dict and Config.FFMPEG_CMDS:
-            ffc = Config.FFMPEG_CMDS
-        else:
-            ffc = "<b>Not Exists</b>"
-
-        if isinstance(ffc, dict):
-            ffc = "\n" + "\n".join(
-                [
-                    f"{no}. <b>{escape(str(key))}</b>: <code>{escape(str(value[0] if isinstance(value, (list, tuple)) and value else value))}</code>"
-                    for no, (key, value) in enumerate(ffc.items(), start=1)
-                ]
-            )
-
-        buttons.data_button("Metadata", f"userset {user_id} menu METADATA")
-        metadata_setting = user_dict.get("METADATA")
-        display_meta_val = "<b>Not Set</b>"
-        if isinstance(metadata_setting, dict) and metadata_setting:
-            display_meta_val = ", ".join(
-                f"{k}={escape(str(v))}" for k, v in metadata_setting.items()
-            )
-            display_meta_val = f"<code>{display_meta_val}</code>"
-        elif isinstance(metadata_setting, str) and metadata_setting:  # Legacy
-            display_meta_val = (
-                f"<code>{escape(metadata_setting)}</code> [<i>Legacy, needs re-set</i>]"
-            )
-
-        buttons.data_button("Audio Metadata", f"userset {user_id} menu AUDIO_METADATA")
-        audio_meta_setting = user_dict.get("AUDIO_METADATA")
-        display_audio_meta = "<b>Not Set</b>"
-        if isinstance(audio_meta_setting, dict) and audio_meta_setting:
-            display_audio_meta = ", ".join(
-                f"{k}={escape(str(v))}" for k, v in audio_meta_setting.items()
-            )
-            display_audio_meta = f"<code>{display_audio_meta}</code>"
-
-        buttons.data_button("Video Metadata", f"userset {user_id} menu VIDEO_METADATA")
-        video_meta_setting = user_dict.get("VIDEO_METADATA")
-        display_video_meta = "<b>Not Set</b>"
-        if isinstance(video_meta_setting, dict) and video_meta_setting:
-            display_video_meta = ", ".join(
-                f"{k}={escape(str(v))}" for k, v in video_meta_setting.items()
-            )
-            display_video_meta = f"<code>{display_video_meta}</code>"
-
-        buttons.data_button(
-            "Subtitle Metadata", f"userset {user_id} menu SUBTITLE_METADATA"
-        )
-        subtitle_meta_setting = user_dict.get("SUBTITLE_METADATA")
-        display_subtitle_meta = "<b>Not Set</b>"
-        if isinstance(subtitle_meta_setting, dict) and subtitle_meta_setting:
-            display_subtitle_meta = ", ".join(
-                f"{k}={escape(str(v))}" for k, v in subtitle_meta_setting.items()
-            )
-            display_subtitle_meta = f"<code>{display_subtitle_meta}</code>"
-
-        buttons.data_button("Back", f"userset {user_id} back", "footer")
-        buttons.data_button(
-            "Close", f"userset {user_id} close", "footer", style=ButtonStyle.DANGER
-        )
-        btns = buttons.build_menu(2)
-
-        text = f"""⌬ <b>FF Settings :</b>
-┟ <b>Name</b> → {user_name}
-┃
-┠ <b>FFmpeg CLI Commands</b> → {ffc}
-┃
-┠ <b>Default Metadata</b> → {display_meta_val}
-┠ <b>Audio Metadata</b> → {display_audio_meta}
-┠ <b>Video Metadata</b> → {display_video_meta}
-┖ <b>Subtitle Metadata</b> → {display_subtitle_meta}"""
-
-    elif stype == "advanced":
-        buttons.data_button(
-            "Excluded Extensions", f"userset {user_id} menu EXCLUDED_EXTENSIONS"
-        )
-        if user_dict.get("EXCLUDED_EXTENSIONS", False):
-            ex_ex = user_dict["EXCLUDED_EXTENSIONS"]
-        elif "EXCLUDED_EXTENSIONS" not in user_dict:
-            ex_ex = excluded_extensions
-        else:
-            ex_ex = "None"
-
-        if ex_ex != "None":
-            ex_ex = ", ".join(ex_ex)
-
-        ns_msg = (
-            f"<code>{swap}</code>"
-            if (swap := user_dict.get("NAME_SWAP", False))
-            else "<b>Not Exists</b>"
-        )
-        buttons.data_button("Name Swap", f"userset {user_id} menu NAME_SWAP")
-
-        buttons.data_button("YT-DLP Options", f"userset {user_id} menu YT_DLP_OPTIONS")
-        if user_dict.get("YT_DLP_OPTIONS", False):
-            ytopt = user_dict["YT_DLP_OPTIONS"]
-        elif "YT_DLP_OPTIONS" not in user_dict and Config.YT_DLP_OPTIONS:
-            ytopt = Config.YT_DLP_OPTIONS
-        else:
-            ytopt = "None"
-
-        if user_dict.get("UPLOAD_PATHS", False):
-            upload_paths = user_dict["UPLOAD_PATHS"]
-        elif "UPLOAD_PATHS" not in user_dict and Config.UPLOAD_PATHS:
-            upload_paths = Config.UPLOAD_PATHS
-        else:
-            upload_paths = "None"
-        buttons.data_button("Upload Paths", f"userset {user_id} menu UPLOAD_PATHS")
-
-        yt_cookie_path = f"cookies/{user_id}/cookies.txt"
-        user_cookie_msg = (
-            "Exists" if await aiopath.exists(yt_cookie_path) else "Not Exists"
-        )
-        buttons.data_button(
-            "YT Cookie File", f"userset {user_id} menu USER_COOKIE_FILE"
-        )
-
-        buttons.data_button("Back", f"userset {user_id} back", "footer")
-        buttons.data_button(
-            "Close", f"userset {user_id} close", "footer", style=ButtonStyle.DANGER
-        )
-        btns = buttons.build_menu(2)
-
-        text = f"""⌬ <b>Advanced Settings :</b>
-┟ <b>Name</b> → {user_name}
-┃
-┠ <b>Auto Name Swaps</b> → {ns_msg}
-┠ <b>Excluded Extensions</b> → <code>{ex_ex}</code>
-┠ <b>Upload Paths</b> → <b>{upload_paths}</b>
-┠ <b>YT-DLP Options</b> → <code>{ytopt}</code>
-┖ <b>YT User Cookie File</b> → <b>{user_cookie_msg}</b>"""
-    elif stype == "yttools":
-        buttons.data_button("YT Description", f"userset {user_id} menu YT_DESP")
-        yt_desp_val = user_dict.get(
-            "YT_DESP",
-            Config.YT_DESP if hasattr(Config, "YT_DESP") else "Not Set (Uses Default)",
-        )
-
-        buttons.data_button("YT Tags", f"userset {user_id} menu YT_TAGS")
-        yt_tags_val = user_dict.get(
-            "YT_TAGS",
-            Config.YT_TAGS if hasattr(Config, "YT_TAGS") else "Not Set (Uses Default)",
-        )
-        if isinstance(yt_tags_val, list):
-            yt_tags_val = ",".join(yt_tags_val)
-
-        buttons.data_button("YT Category ID", f"userset {user_id} menu YT_CATEGORY_ID")
-        yt_cat_id_val = user_dict.get(
-            "YT_CATEGORY_ID",
-            (
-                Config.YT_CATEGORY_ID
-                if hasattr(Config, "YT_CATEGORY_ID")
-                else "Not Set (Uses Default)"
-            ),
-        )
-
-        buttons.data_button(
-            "YT Privacy Status", f"userset {user_id} menu YT_PRIVACY_STATUS"
-        )
-        yt_privacy_val = user_dict.get(
-            "YT_PRIVACY_STATUS",
-            (
-                Config.YT_PRIVACY_STATUS
-                if hasattr(Config, "YT_PRIVACY_STATUS")
-                else "Not Set (Uses Default)"
-            ),
-        )
-
-        buttons.data_button("Back", f"userset {user_id} back mirror", "footer")
-        buttons.data_button(
-            "Close", f"userset {user_id} close", "footer", style=ButtonStyle.DANGER
-        )
-        btns = buttons.build_menu(2)
-
-        text = f"""⌬ <b>YouTube Tools Settings:</b>
-┟ <b>Name</b> → {user_name}
-┃
-┠ <b>YT Description</b> → <code>{escape(str(yt_desp_val))}</code>
-┠ <b>YT Tags</b> → <code>{escape(str(yt_tags_val))}</code>
-┠ <b>YT Category ID</b> → <code>{escape(str(yt_cat_id_val))}</code>
-┖ <b>YT Privacy Status</b> → <code>{escape(str(yt_privacy_val))}</code>"""
-
-    return text, btns
-
-
-async def update_user_settings(query, stype="main"):
-    handler_dict[query.from_user.id] = False
-    msg, button = await get_user_settings(query.from_user, stype)
-    await edit_message(query.message, msg, button)
-
-
-@new_task
-async def send_user_settings(_, message):
-    from_user = message.from_user
-    handler_dict[from_user.id] = False
-    msg, button = await get_user_settings(from_user)
-    await send_message(message, msg, button)
-
-
-@new_task
-async def add_file(_, message, ftype, rfunc):
-    user_id = message.from_user.id
-    handler_dict[user_id] = False
-    if ftype == "THUMBNAIL":
-        des_dir = await create_thumb(message, user_id)
-    elif ftype == "RCLONE_CONFIG":
-        rpath = f"{getcwd()}/rclone/"
-        await makedirs(rpath, exist_ok=True)
-        des_dir = f"{rpath}{user_id}.conf"
-        await message.download(file_name=des_dir)
-    elif ftype == "TOKEN_PICKLE":
-        tpath = f"{getcwd()}/tokens/"
-        await makedirs(tpath, exist_ok=True)
-        des_dir = f"{tpath}{user_id}.pickle"
-        await message.download(file_name=des_dir)
-    elif ftype == "USER_COOKIE_FILE":
-        cpath = f"{getcwd()}/cookies/{user_id}"
-        await makedirs(cpath, exist_ok=True)
-        des_dir = f"{cpath}/cookies.txt"
-        await message.download(file_name=des_dir)
-    await delete_message(message)
-    update_user_ldata(user_id, ftype, des_dir)
-    await rfunc()
-    await database.update_user_doc(user_id, ftype, des_dir)
-
-
-def validate_ffmpeg_cmds(value):
-    for key, cmds in value.items():
-        if not isinstance(cmds, (list, tuple)) or not cmds:
-            raise ValueError(f"'{key}' must be a non-empty list of command strings")
-        for cmd in cmds:
-            if not isinstance(cmd, str) or not cmd.strip():
-                raise ValueError(f"'{key}' has an empty or non-string command")
-            if "-i" not in cmd.split():
-                raise ValueError(f"'{key}' has a command without an -i input: {cmd}")
-
-
-@new_task
-async def add_one(_, message, option, rfunc):
-    user_id = message.from_user.id
-    handler_dict[user_id] = False
-    user_dict = user_data.get(user_id, {})
-    value = message.text
-    if value.startswith("{") and value.endswith("}"):
-        try:
-            value = literal_eval(value)
-            if not isinstance(value, dict):
-                raise ValueError("Expected a dict")
-            if option == "DRIVE_CAT":
-                parsed = {}
-                for k, v in value.items():
-                    if k.strip().casefold() == "default":
-                        raise ValueError(
-                            '"Default" is reserved and cannot be used as a category name'
-                        )
-                    parts = str(v).split("|", 1)
-                    did = parts[0].strip()
-                    ilink = parts[1].strip() if len(parts) > 1 else ""
-                    parsed[k.strip()] = {"drive_id": did, "index_link": ilink}
-                value = parsed
-            elif option == "FFMPEG_CMDS":
-                validate_ffmpeg_cmds(value)
-            if user_dict.get(option):
-                user_dict[option].update(value)
-            else:
-                update_user_ldata(user_id, option, value)
-        except Exception as e:
-            await send_message(message, str(e))
-            return
     else:
         await send_message(message, "It must be Dict!")
         return
@@ -1302,7 +897,7 @@ async def set_option(_, message, option, rfunc):
     # elif option == "LEECH_DUMP_CHAT": # TODO: Add
     elif option == "EXCLUDED_EXTENSIONS":
         fx = value.split()
-        value = ["aria2", "!qB"]
+        value = []
         for x in fx:
             x = x.lstrip(".")
             value.append(x.strip().lower())
@@ -1452,10 +1047,6 @@ async def get_menu(option, message, user_id):
         back_to = "advanced"
     elif option in uphoster_options:
         back_to = option.split("_")[0].lower()
-    elif option in mega_options:
-        back_to = "mega"
-    elif option in seedr_options:
-        back_to = "seedr"
     else:
         back_to = "back"
     buttons.data_button("Back", f"userset {user_id} {back_to}", "footer")
@@ -1502,7 +1093,7 @@ async def get_menu(option, message, user_id):
         elif not val:
             val = "<b>Not Exists</b>"
 
-    elif option in ["FFMPEG_CMDS", "YT_DLP_OPTIONS", "UPLOAD_PATHS"]:
+    elif option in ["FFMPEG_CMDS", "UPLOAD_PATHS"]:
         val = f"<code>{escape(str(val))}</code>" if val else "<b>Not Exists</b>"
 
     if option == "METADATA":
@@ -1609,46 +1200,6 @@ async def edit_user_settings(client, query):
     ]:
         await query.answer()
         await update_user_settings(query, data[2])
-    elif data[2] == "mega":
-        await query.answer()
-        msg, button = await get_user_settings(query.from_user, "mega")
-        await edit_message(message, msg, button)
-        mega_email = user_dict.get("MEGA_EMAIL", "")
-        mega_password = user_dict.get("MEGA_PASSWORD", "")
-        if mega_email and mega_password:
-            info_text = await get_mega_account_info(mega_email, mega_password)
-            msg += f"\n\n{info_text}"
-            await edit_message(message, msg, button)
-    elif data[2] == "seedr":
-        await query.answer()
-        msg, button = await get_user_settings(query.from_user, "seedr")
-        await edit_message(message, msg, button)
-        seedr_email = user_dict.get("SEEDR_EMAIL", "")
-        seedr_password = user_dict.get("SEEDR_PASSWORD", "")
-        if seedr_email and seedr_password:
-            try:
-                sc = SeedrClient(seedr_email, seedr_password)
-                await sc.login()
-                space_max, space_used = await sc.get_space()
-                msg += f"\n\n<b>Seedr Space</b> → <code>{get_readable_file_size(space_used)} / {get_readable_file_size(space_max)}</code>"
-            except Exception as e:
-                msg += f"\n\n<b>Seedr Login Failed:</b> {escape(str(e))}"
-            await edit_message(message, msg, button)
-    elif data[2] == "clear_seedr":
-        await query.answer("Clearing Seedr Storage...", show_alert=False)
-        seedr_email = user_dict.get("SEEDR_EMAIL", "")
-        seedr_password = user_dict.get("SEEDR_PASSWORD", "")
-        if seedr_email and seedr_password:
-            try:
-                from .mirror_leech import clear_seedr_account
-
-                t_c, f_c = await clear_seedr_account(seedr_email, seedr_password)
-                await query.answer(
-                    f"Removed {t_c} torrent(s) and {f_c} folder(s)!", show_alert=True
-                )
-            except Exception as e:
-                await query.answer(f"Failed: {e}"[:180], show_alert=True)
-        await update_user_settings(query, "seedr")
     elif data[2] == "yttools":
         await query.answer()
         await update_user_settings(query, data[2])
@@ -1713,8 +1264,6 @@ async def edit_user_settings(client, query):
             back_to = "general"
         elif data[3] == "GOFILE_AUTO_CREATE_FOLDER":
             back_to = "gofile"
-        elif data[3] == "SEEDR_DELETE_FOLDER":
-            back_to = "seedr"
         else:
             back_to = "leech"
         await update_user_settings(query, stype=back_to)
@@ -1786,10 +1335,6 @@ async def edit_user_settings(client, query):
             await database.update_user_doc(user_id, data[3])
         else:
             update_user_ldata(user_id, data[3], "")
-            if data[3] == "MEGA_EMAIL":
-                update_user_ldata(user_id, "MEGA_PASSWORD", "")
-            elif data[3] == "SEEDR_EMAIL":
-                update_user_ldata(user_id, "SEEDR_PASSWORD", "")
             await database.update_user_data(user_id)
         await get_menu(data[3], message, user_id)
     elif data[2] == "reset":

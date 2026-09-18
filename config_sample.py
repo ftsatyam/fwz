@@ -38,7 +38,6 @@ DISABLE_LEECH = False
 DISABLE_MIRROR = False
 DISABLE_BULK = False
 DISABLE_MULTI = False
-DISABLE_SEED = False
 DISABLE_FF_MODE = False
 DISABLE_STREAM = False
 DISABLE_PLUGINS = False
@@ -80,7 +79,6 @@ IMG_PAGE = 1
 IMG_SOURCES = ["wallpaperflare"]
 
 # Insta video downloader api
-INSTADL_API = ""
 
 
 # Media Search
