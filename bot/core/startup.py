@@ -226,4 +226,5 @@ async def load_configurations():
     if not await aiopath.exists("accounts"):
         Config.USE_SERVICE_ACCOUNTS = False
 
+    from ..helper.ext_utils.tunnel_monitor import apply_tunnel_url_once
     await apply_tunnel_url_once()
