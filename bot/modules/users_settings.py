@@ -162,15 +162,6 @@ user_settings_text = {
 ┖ <b>Time Left :</b> <code>60 sec</code>
 """,
     ),
-    "YT_DLP_OPTIONS": (
-        "",
-        "",
-        """Format: {key: value, key: value, key: value}.
-Example: {"format": "bv*+mergeall[vcodec=none]", "nocheckcertificate": True, "playliststart": 10, "fragment_retries": float("inf"), "matchtitle": "S13", "writesubtitles": True, "live_from_start": True, "postprocessor_args": {"ffmpeg": ["-threads", "4"]}, "wait_for_video": (5, 100), "download_ranges": [{"start_time": 0, "end_time": 10}]}
-Check all yt-dlp api options from this <a href='https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L184'>FILE</a> or use this <a href='https://t.me/mltb_official_channel/177'>script</a> to convert cli arguments to api options.
-
-<i>Send dict of YT-DLP Options according to format.</i> \n┖ <b>Time Left :</b> <code>60 sec</code>""",
-    ),
     "FFMPEG_CMDS": (
         "",
         "",
@@ -261,11 +252,6 @@ Here I will explain how to use mltb.* which is reference to files you want to wo
         "public, private, or unlisted",
         "Custom privacy status for YouTube uploads. Default is used if not set.",
         "<i>Send your custom YouTube privacy status (public, private, or unlisted).</i> \nTime Left : <code>60 sec</code>",
-    ),
-    "USER_COOKIE_FILE": (
-        "File",
-        "User's YT-DLP Cookie File to authenticate access to websites and youtube.",
-        "<i>Send your cookie file (e.g., cookies.txt or abc.txt).</i> \n┖ <b>Time Left :</b> <code>60 sec</code>",
     ),
     "GOFILE_TOKEN": (
         "String",

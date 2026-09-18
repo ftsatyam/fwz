@@ -555,7 +555,6 @@ These ship with the bot and are ordinary plugins — read them as worked example
 | `speedtest` | `/speedtest`, `/spt` | speedtest-cli | multi-file, `sync_to_async` |
 | `imdb` | `/imdb` | imdbio, pycountry | a callback handler |
 | `mediainfo` | `/mediainfo`, `/mi` | — | telegraph output, `cmd_exec` |
-| `nzb_search` | `/nzbsearch`, `/ns` | — | aiohttp, reading `Config` |
 | `gen_pyro_sess` | `/exportsession` | — | its own runtime handlers and client |
 
 Disable or uninstall any of them from `/plugins`; the choice is stored per bot

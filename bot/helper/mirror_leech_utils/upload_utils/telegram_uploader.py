@@ -470,7 +470,7 @@ class TelegramUploader:
         upload_tasks = []
         seq_idx = 0
         for dirpath, _, files in natsorted(await sync_to_async(walk, self._path)):
-            if dirpath.strip().endswith("/yt-dlp-thumb"):
+            if dirpath.strip().endswith("/media-thumb"):
                 continue
             if dirpath.strip().endswith("_mltbss"):
                 await self._send_screenshots(dirpath, files)

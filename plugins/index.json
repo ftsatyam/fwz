@@ -68,19 +68,6 @@
       "min_bot_version": "3.1.10"
     },
     {
-      "id": "nzb_search",
-      "name": "NZB Search",
-      "version": "1.0.0",
-      "author": "WZML-X",
-      "description": "Search Usenet indexers through Hydra",
-      "tags": [
-        "usenet",
-        "search"
-      ],
-      "repo": "SilentDemonSD/WZML-X@wzv3-dev",
-      "min_bot_version": "3.1.9"
-    },
-    {
       "id": "speedtest",
       "name": "Speedtest",
       "version": "1.0.0",

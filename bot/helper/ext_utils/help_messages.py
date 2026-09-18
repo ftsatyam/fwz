@@ -7,17 +7,14 @@ mirror = """<b>Send link along with command line or </b>
 
 /cmd -n new name -e -up upload destination
 
-<b>NOTE:</b>
-1. Commands that start with <b>qb</b> are ONLY for torrents."""
+<b>NOTE:</b> Use the command options shown below for Telegram and cloud transfers."""
 
-yt = """<b>Send link along with command line</b>:
+yt = """<b>YouTube Upload</b>:
 
-/cmd link
-<b>By replying to link</b>:
-/cmd -n new name -z password -opt x:y|x1:y1
+/cmd link -yt
 
-Check here all supported <a href='https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md'>SITES</a>
-Check all yt-dlp api options from this <a href='https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L212'>FILE</a> or use this <a href='https://t.me/mltb_official_channel/177'>script</a> to convert cli arguments to api options."""
+Use <code>-yt</code> with a prepared local or Telegram media file to upload it to YouTube.
+Configure the YouTube upload description, tags, category, and privacy in settings."""
 
 clone = """Send Gdrive|Gdot|Filepress|Filebee|Appdrive|Gdflix link or rclone path along with command or by replying to the link/rc_path by command.
 Use -sync to use sync method in rclone. Example: /cmd rcl/rclone_path -up rcl/rclone_path/rc -sync"""
@@ -25,7 +22,7 @@ Use -sync to use sync method in rclone. Example: /cmd rcl/rclone_path -up rcl/rc
 new_name = """<b>New Name</b>: -n
 
 /cmd link -n new name
-Note: Doesn't work with torrents"""
+Note: Use this option with supported Telegram or cloud sources"""
 
 multi_link = """<b>Multi links only by replying to first link/file</b>: -i
 
@@ -33,7 +30,7 @@ multi_link = """<b>Multi links only by replying to first link/file</b>: -i
 
 same_dir = """<b>Move file(s)/folder(s) to new folder</b>: -m
 
-You can use this arg also to move multiple links/torrents contents to the same directory, so all links will be uploaded together as one task
+You can use this arg also to move multiple link contents to the same directory, so all links will be uploaded together as one task
 
 /cmd link -m new folder (only one link inside new folder)
 /cmd -i 10(number of links/files) -m folder name (all links contents in one folder)
@@ -171,27 +168,12 @@ Create screenshots for one video or folder of videos.
 /cmd -ss (it will take the default values which is 10 photos).
 You can control this value. Example: /cmd -ss 6."""
 
-seed = """<b>Bittorrent seed</b>: -d
-
-/cmd link -d ratio:seed_time or by replying to file/link
-To specify ratio and seed time add -d ratio:time.
-Example: -d 0.7:10 (ratio and time) or -d 0.7 (only ratio) or -d :10 (only time) where time in minutes"""
 
 zip_arg = """<b>Zip</b>: -z password
 
 /cmd link -z (zip)
 /cmd link -z password (zip password protected)"""
 
-qual = """<b>Quality Buttons</b>: -s
-
-In case default quality added from yt-dlp options using format option and you need to select quality for specific link or links with multi links feature.
-/cmd link -s"""
-
-yt_opt = """<b>Options</b>: -opt
-
-/cmd link -opt {"format": "bv*+mergeall[vcodec=none]", "nocheckcertificate": True, "playliststart": 10, "fragment_retries": float("inf"), "matchtitle": "S13", "writesubtitles": True, "live_from_start": True, "postprocessor_args": {"ffmpeg": ["-threads", "4"]}, "wait_for_video": (5, 100), "download_ranges": [{"start_time": 0, "end_time": 10}]}
-
-Check all yt-dlp api options from this <a href='https://github.com/yt-dlp/yt-dlp/blob/master/yt_dlp/YoutubeDL.py#L184'>FILE</a> or use this <a href='https://t.me/mltb_official_channel/177'>script</a> to convert cli arguments to api options."""
 
 convert_media = """<b>Convert Media</b>: -ca -cv
 /cmd link -ca mp3 -cv mp4 (convert all audios to mp3 and all videos to mp4)
@@ -294,8 +276,6 @@ YT_HELP_DICT = {
     "main": yt,
     "New-Name": f"{new_name}\nNote: Don't add file extension",
     "Zip": zip_arg,
-    "Quality": qual,
-    "Options": yt_opt,
     "Multi-Link": multi_link,
     "Same-Directory": same_dir,
     "Thumb": thumb,

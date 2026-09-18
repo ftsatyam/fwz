@@ -918,17 +918,13 @@ async def edit_bot_settings(client, query):
         await update_buttons(message, key)
     elif data[1] in [
         "var",
-        "aria",
-        "qbit",
-        "nzb",
-        "nzbserver",
         "setonoff",
         "settoggle",
         "setlimit",
     ] or data[
         1
-    ].startswith("nzbser"):
-        if data[1] in ("nzbserver", "setlimit"):
+]:
+        if data[1] in ("setlimit",):
             globals()["start"] = 0
         await query.answer()
         await update_buttons(message, data[1])

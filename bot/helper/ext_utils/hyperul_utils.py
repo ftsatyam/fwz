@@ -59,11 +59,11 @@ class HypertgUpload(HypertgTransfer):
         if not is_image and thumb is None:
             file_name = ospath.splitext(self._up_file)[0]
             base_path = getattr(self._obj, "_path", "")
-            thumb_path = f"{base_path}/yt-dlp-thumb/{file_name}.jpg"
+            thumb_path = f"{base_path}/media-thumb/{file_name}.jpg"
             if await aiopath.isfile(thumb_path):
                 thumb = thumb_path
-            elif await aiopath.isfile(thumb_path.replace("/yt-dlp-thumb", "")):
-                thumb = thumb_path.replace("/yt-dlp-thumb", "")
+            elif await aiopath.isfile(thumb_path.replace("/media-thumb", "")):
+                thumb = thumb_path.replace("/media-thumb", "")
             elif is_audio and not is_video:
                 thumb = await get_audio_thumbnail(file_path)
 
