@@ -848,12 +848,7 @@ async def get_user_settings(from_user, stype="main"):
 ┖ <b>Bot Stop Duplicate</b> → <b>{sd_msg}</b>
 """
 
-    else:
-        await send_message(message, "It must be Dict!")
-        return
-    await delete_message(message)
-    await rfunc()
-    await database.update_user_data(user_id)
+    return text, btns
 
 
 @new_task
@@ -950,7 +945,7 @@ async def set_option(_, message, option, rfunc):
         else:
             value = {}
 
-    elif option in ["UPLOAD_PATHS", "FFMPEG_CMDS", "YT_DLP_OPTIONS", "DRIVE_CAT"]:
+    elif option in ["UPLOAD_PATHS", "FFMPEG_CMDS", "DRIVE_CAT"]:
         if value.startswith("{") and value.endswith("}"):
             try:
                 value = literal_eval(sub(r"\s+", " ", value))
@@ -1007,7 +1002,7 @@ async def get_menu(option, message, user_id):
             buttons.data_button(
                 "View Thumb", f"userset {user_id} view THUMBNAIL", "header"
             )
-        elif option in ["YT_DLP_OPTIONS", "FFMPEG_CMDS", "UPLOAD_PATHS", "DRIVE_CAT"]:
+        elif option in ["FFMPEG_CMDS", "UPLOAD_PATHS", "DRIVE_CAT"]:
             buttons.data_button(
                 "Add One", f"userset {user_id} addone {option}", "header"
             )
