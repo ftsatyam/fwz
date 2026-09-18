@@ -1,7 +1,7 @@
 from ast import literal_eval
 from importlib import import_module
 from os import getenv
-from wz_bin import bin_name
+from zake_bin import bin_name
 
 
 class Config:
