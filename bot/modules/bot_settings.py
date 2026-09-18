@@ -67,9 +67,6 @@ from ..helper.telegram_helper.message_utils import (
     send_message,
     update_status_message,
 )
-from .rss import add_job
-from .search import initiate_search_tools
-
 start = 0
 state = "view"
 handler_dict = {}
@@ -907,9 +904,7 @@ async def edit_variable(_, message, pre_message, key):
     await update_buttons(pre_message, key, "editvar", False)
     await delete_message(message)
     await database.update_config({key: value})
-    if key in ["SEARCH_PLUGINS", "SEARCH_API_LINK"]:
-        await initiate_search_tools()
-    elif key in ["QUEUE_ALL", "QUEUE_DOWNLOAD", "QUEUE_UPLOAD"]:
+    if key in ["QUEUE_ALL", "QUEUE_DOWNLOAD", "QUEUE_UPLOAD"]:
         await start_from_queued()
     elif key in [
         "RCLONE_SERVE_URL",
@@ -918,14 +913,6 @@ async def edit_variable(_, message, pre_message, key):
         "RCLONE_SERVE_PASS",
     ]:
         await rclone_serve_booter()
-    elif key in ["JD_EMAIL", "JD_PASS"]:
-        await jdownloader.boot()
-    elif key == "RSS_DELAY":
-        add_job()
-    elif key == "USENET_SERVERS":
-        for s in value:
-            await sabnzbd_client.set_special_config("servers", s)
-
 
 @new_task
 async def toggle_bool_var(_, query, pre_message, key, value):
@@ -1447,9 +1434,7 @@ async def edit_bot_settings(client, query):
         if data[2] == "DATABASE_URL":
             await database.disconnect()
         await database.update_config({data[2]: value})
-        if data[2] in ("SEARCH_PLUGINS", "SEARCH_API_LINK"):
-            await initiate_search_tools()
-        elif data[2] in ("QUEUE_ALL", "QUEUE_DOWNLOAD", "QUEUE_UPLOAD"):
+        if data[2] in ("QUEUE_ALL", "QUEUE_DOWNLOAD", "QUEUE_UPLOAD"):
             await start_from_queued()
         elif data[2] in (
             "RCLONE_SERVE_URL",
@@ -1782,5 +1767,4 @@ async def load_config():
         await database.update_config(Config.get_all())
     else:
         await database.disconnect()
-    await gather(initiate_search_tools(), start_from_queued(), rclone_serve_booter())
-    add_job()
+    await gather(start_from_queued(), rclone_serve_booter())
