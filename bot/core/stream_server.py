@@ -9,6 +9,7 @@ from asyncio import (
 from collections import OrderedDict
 from json import loads
 from os import getenv
+from pathlib import Path
 from re import compile as re_compile
 from subprocess import PIPE
 from urllib.parse import quote
@@ -710,8 +711,16 @@ async def _ping(_):
     return web.json_response({"ok": True})
 
 
+async def _landing(_):
+    landing = Path(__file__).resolve().parents[2] / "web" / "templates" / "landing.html"
+    if not landing.is_file():
+        raise web.HTTPNotFound(text="Landing page not found")
+    return web.FileResponse(landing)
+
+
 def build_app():
     app = web.Application()
+    app.router.add_route("GET", "/", _landing)
     app.router.add_route("GET", "/_ping", _ping)
     app.router.add_route("GET", "/_meta/{token}", _meta)
     app.router.add_route("GET", "/_tracks/{token}", _tracks)
