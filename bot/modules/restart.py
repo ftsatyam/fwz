@@ -11,11 +11,9 @@ from pyrogram.enums import ButtonStyle
 
 from bot.version import get_version
 
-from .. import LOGGER, intervals, sabnzbd_client, scheduler
+from .. import LOGGER, intervals, scheduler
 from ..core.config_manager import Config, BinConfig
-from ..core.jdownloader_booter import jdownloader
 from ..core.tg_client import TgClient
-from ..core.torrent_manager import TorrentManager
 from ..helper.ext_utils.bot_utils import (
     THREAD_POOL,
     cmd_exec,
@@ -23,7 +21,6 @@ from ..helper.ext_utils.bot_utils import (
     resolve_command,
 )
 from ..helper.ext_utils.db_handler import database
-from ..helper.listeners.mega_listener import mega_cleanup
 from ..helper.telegram_helper import button_build
 from ..helper.telegram_helper.message_utils import (
     delete_message,

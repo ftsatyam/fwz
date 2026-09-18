@@ -71,9 +71,9 @@ WZML-X is built for users who want a single bot stack that can mirror, leech, ma
 |---|---|
 | Mirroring | Send files to Telegram with a controllable pipeline |
 | Leeching | Deliver files in the format you prefer, including document and media workflows |
-| File selection UI | Review and select torrent / NZB / upload contents before finalizing |
-| Multi-source downloads | Use qBittorrent, Aria2, JDownloader, Mega, NZB, and yt-dlp integrations |
-| Storage and upload paths | Push content to Google Drive, Rclone, Mega, and other supported routes |
+| Streaming and media UI | Stream retained Telegram media through the web UI |
+| Downloading | Telegram file download/leech only |
+| Storage and upload paths | Push content to Telegram, Google Drive, Rclone, UpHoster, YouTube, HyperUpload, and other retained upload routes |
 | Automation | Limit tasks, tune queues, and manage startup updates from one config layer |
 
 ## How It Runs
@@ -86,7 +86,7 @@ Deploy with Docker and provide the required configuration values. The container 
    - Docker installed
    - Your Telegram bot token and Telegram API credentials
    - A MongoDB connection string
-   - The optional service credentials you want to enable, such as Drive, Rclone, Mega, JDownloader, or SABnzbd
+   - The optional credentials for Google Drive, Rclone, UpHoster, YouTube, and other retained upload routes.
 </details>
 
 ## Deployment
@@ -146,7 +146,7 @@ Deploy with Docker and provide the required configuration values. The container 
    docker buildx compose up -d
    ```
 
-   Each bot gets its own cloudflared tunnel URL. Admin ports (qBittorrent, SABnzbd) are mapped to different host ports (`127.0.0.1:8091`, etc.).
+   Each bot gets its own cloudflared tunnel URL when the optional tunnel service is enabled.
 </details>
 
 <details>
@@ -163,7 +163,6 @@ Deploy with Docker and provide the required configuration values. The container 
 <details>
    <summary>Deployment Notes</summary>
 
-   1. If you use qBittorrent, tune `AsyncIOThreadsCount` to your machine size.
    2. Stop the container before removing it, and remove the container before pruning images.
    3. Useful cleanup commands:
 
@@ -206,7 +205,7 @@ Then tune the optional behavior from `config_sample.py`.
    | `LEECH_SPLIT_SIZE` | How large leech outputs are split |
    | `QUEUE_ALL`, `QUEUE_DOWNLOAD`, `QUEUE_UPLOAD` | Queue pressure and concurrency |
    | `SHOW_CLOUD_LINK` | Whether cloud links are shown to users |
-   | `WEB_PINCODE` | Protects web access to file selection |
+   | `WEB_PINCODE` | Protects web access to the streaming UI |
 </details>
 
 <details>
@@ -214,49 +213,20 @@ Then tune the optional behavior from `config_sample.py`.
 
    The sample config also covers:
 
-   - qBittorrent and Aria2-related controls
-   - JDownloader login details
-   - Mega credentials
-   - SABnzbd server definitions
-   - Google Drive settings
-   - RSS, search, media metadata, and logging controls
+   - Telegram download and leech controls
+   - Google Drive, Rclone, UpHoster, YouTube, and HyperUpload settings
+   - Media metadata and logging controls
 </details>
 
-<details>
-   <summary>AllDebrid (<code>-ad</code>)</summary>
-
-   Set `ALLDEBRID_API_KEY` (default: empty, feature off) in `config_sample.py`,
-   in the environment, or from **Bot Settings → Config Variables → ALLDEBRID_API_KEY**.
-
-   Add `-ad` to a mirror/leech command to route the input through AllDebrid:
-
-   - `/mirror <filehost link> -ad` unlocks premium hosts (1fichier, rapidgator,
-     mega, ...) and hands the direct link to the normal downloader.
-   - `/leech <magnet> -ad` (or reply to a `.torrent` with `-ad`) uploads the
-     torrent to AllDebrid, waits for it to finish there, then downloads every
-     file from AllDebrid's CDN — aria2/qBittorrent are bypassed entirely.
-
-   `ALLDEBRID_NO_SEED_TIMEOUT` (default: `180`) caps how many seconds a magnet may
-   stall with no seeders and no download progress before the task is aborted.
-   Set it to `0` to disable the check and rely on AllDebrid's own dead-torrent
-   reporting instead.
-
-   The flag is documented in the mirror help menu under the **AllDebrid** button.
-   Without a key the task fails with `ALLDEBRID_API_KEY is not configured`;
-   without `-ad` nothing changes. Magnets stop after 3 min with no seeders and
-   2 h overall, and are removed from your AllDebrid history if the task fails.
-</details>
 
 ## Project Layout
 
 | Path | Purpose |
 |---|---|
 | `bot/` | Bot core, handlers, listeners, and modules |
-| `web/` | FastAPI app, templates, and the file selector UI |
+| `web/` | FastAPI app, streaming templates, and media proxy UI |
 | `gen_scripts/` | Setup helpers for sessions, tokens, and drive configuration |
 | `plugins/` | Optional bot plugins |
-| `qBittorrent/` | Default qBittorrent configuration |
-| `sabnzbd/` | Default SABnzbd configuration |
 
 ## Documentation
 
@@ -324,4 +294,3 @@ WZML-X is a fork of [mirror-leech-telegram-bot](https://github.com/anasty17/mirr
 ## License
 
 This project is distributed under the terms of the repository license. See [LICENSE](LICENSE) for the full text.
-

@@ -5,8 +5,6 @@ from wz_bin import bin_name
 
 
 class Config:
-    ALLDEBRID_API_KEY = ""
-    ALLDEBRID_NO_SEED_TIMEOUT = 180
     AS_DOCUMENT = False
     AUTHORIZED_CHATS = ""
     BASE_URL = ""
@@ -24,22 +22,14 @@ class Config:
     DEFAULT_UPLOAD = "rc"
     DELETE_LINKS = False
     DEBRID_LINK_API = ""
-    DISABLE_TORRENTS = False
     DISABLE_LEECH = False
     DISABLE_MIRROR = False
     DISABLE_BULK = False
     DISABLE_MULTI = False
     DISABLE_SEED = False
     DISABLE_FF_MODE = False
-    DISABLE_MEGA = False
     DISABLE_PLUGINS = False
-    DISABLE_JD = True
-    DISABLE_NZB = True
-    DISABLE_SEEDR = True
-    DISABLE_RSS = False
-    DISABLE_SEARCH = False
     DISABLE_STREAM = False
-    DISABLE_YTDLP = False
     PLUGIN_INDEXES = []
     EQUAL_SPLITS = False
     EXCLUDED_EXTENSIONS = ""
@@ -72,23 +62,9 @@ class Config:
     INC_TASK_RESUME = False
     INDEX_URL = ""
     IS_TEAM_DRIVE = False
-    JD_EMAIL = ""
-    JD_PASS = ""
-    MEGA_EMAIL = ""
-    MEGA_PASSWORD = ""
-    SEEDR_EMAIL = ""
-    SEEDR_PASSWORD = ""
-    SEEDR_DELETE_FOLDER = False
-    DIRECT_LIMIT = 0
-    MEGA_LIMIT = 0
-    TORRENT_LIMIT = 0
     GD_DL_LIMIT = 0
     RC_DL_LIMIT = 0
     CLONE_LIMIT = 0
-    JD_LIMIT = 0
-    NZB_LIMIT = 0
-    SEEDR_LIMIT = 0
-    YTDLP_LIMIT = 0
     PLAYLIST_LIMIT = 0
     LEECH_LIMIT = 0
     EXTRACT_LIMIT = 0
@@ -117,8 +93,6 @@ class Config:
     CPU_LIMIT = 20
     FFMPEG_CORES = "auto"
     THROTTLE_SERVICES = "auto"
-    HYDRA_IP = ""
-    HYDRA_API_KEY = ""
     NAME_SWAP = ""
     OWNER_ID = 0
     QUEUE_ALL = 0
@@ -131,12 +105,6 @@ class Config:
     RCLONE_SERVE_USER = ""
     RCLONE_SERVE_PASS = ""
     RCLONE_SERVE_PORT = 8081
-    RSS_CHAT = ""
-    RSS_DELAY = 600
-    RSS_SIZE_LIMIT = 0
-    SEARCH_API_LINK = ""
-    SEARCH_LIMIT = 0
-    SEARCH_PLUGINS = []
     SET_COMMANDS = True
     STATUS_LIMIT = 10
     STATUS_UPDATE_INTERVAL = 15
@@ -151,7 +119,6 @@ class Config:
     AUTO_THUMBNAIL = False
     VERIFY_TIMEOUT = 0
     LOGIN_PASS = ""
-    TORRENT_TIMEOUT = 0
     TIMEZONE = "Asia/Kolkata"
     USER_MAX_TASKS = 0
     USER_TIME_INTERVAL = 0
@@ -160,14 +127,12 @@ class Config:
     DRIVE_CATEGORY_SA = ""
     UPSTREAM_REPO = ""
     UPSTREAM_BRANCH = "wzv3"
-    USENET_SERVERS = []
     USER_SESSION_STRING = ""
     TRANSMISSION_MODE = "both"
     USE_SERVICE_ACCOUNTS = False
     ENABLE_TELEMETRY = True
     WEB_ACCESS_PASSWORD = ""
     WEB_PINCODE = True
-    YT_DLP_OPTIONS = {}
     YT_DESP = "Uploaded with WZML-X bot"
     YT_TAGS = ["telegram", "bot", "youtube"]
     YT_CATEGORY_ID = 22
@@ -217,16 +182,9 @@ class Config:
                     "BASE_URL",
                     "RCLONE_SERVE_URL",
                     "INDEX_URL",
-                    "SEARCH_API_LINK",
                 ]:
                     if value:
                         value = value.strip("/")
-                elif attr == "USENET_SERVERS":
-                    try:
-                        if not value[0].get("host"):
-                            continue
-                    except Exception:
-                        continue
                 setattr(cls, attr, value)
         if hasattr(settings, "LEECH_DUMP_CHAT"):
             legacy_value = getattr(settings, "LEECH_DUMP_CHAT")
@@ -315,16 +273,9 @@ class Config:
                     "BASE_URL",
                     "RCLONE_SERVE_URL",
                     "INDEX_URL",
-                    "SEARCH_API_LINK",
                 ]:
                     if value:
                         value = value.strip("/")
-                elif key == "USENET_SERVERS":
-                    try:
-                        if not value[0].get("host"):
-                            value = []
-                    except Exception:
-                        value = []
                 value = cls._convert_env_type(key, value)
                 setattr(cls, key, value)
         if config_dict.get("LEECH_DUMP_CHAT") and not cls.LEECH_LOG_CHAT:
@@ -343,8 +294,5 @@ DEFAULT_CONFIG = Config.get_all()
 
 
 class BinConfig:
-    ARIA2_NAME = bin_name(0)
-    QBIT_NAME = bin_name(1)
     FFMPEG_NAME = bin_name(2)
     RCLONE_NAME = bin_name(3)
-    SABNZBD_NAME = bin_name(4)

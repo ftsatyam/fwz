@@ -10,7 +10,6 @@ from aioshutil import rmtree
 from .. import (
     LOGGER,
     bot_loop,
-    aria2_options,
     auth_chats,
     categories_dict,
     drives_ids,
@@ -21,78 +20,12 @@ from .. import (
     var_list,
     user_data,
     excluded_extensions,
-    nzb_options,
-    qbit_options,
-    rss_dict,
-    sabnzbd_client,
     sudo_users,
 )
 from ..helper.ext_utils.bot_utils import cmd_exec, derive_service_password
 from ..helper.ext_utils.db_handler import database
 from .config_manager import Config, BinConfig
 from .tg_client import TgClient, db_partition_id
-from .torrent_manager import TorrentManager
-
-
-def _qbit_password():
-    return derive_service_password(
-        (Config.BOT_TOKEN or "").split(":", 1)[0] or "0",
-        "qbit",
-    )
-
-
-async def update_qb_options():
-    LOGGER.info("Get qBittorrent options from server")
-    pwd = _qbit_password()
-    if not qbit_options:
-        if not TorrentManager.qbittorrent:
-            LOGGER.warning(
-                "qBittorrent is not initialized. Skipping qBittorrent options update."
-            )
-            return
-        opt = await TorrentManager.qbittorrent.app.preferences()
-        qbit_options.update(opt)
-        del qbit_options["listen_port"]
-        for k in list(qbit_options.keys()):
-            if k.startswith("rss"):
-                del qbit_options[k]
-        qbit_options["web_ui_password"] = pwd
-        await TorrentManager.qbittorrent.app.set_preferences({"web_ui_password": pwd})
-        await TorrentManager._auth_qbit()
-    else:
-        if qbit_options.get("web_ui_password") in ("admin", "admin1", ""):
-            qbit_options["web_ui_password"] = pwd
-        await TorrentManager.qbittorrent.app.set_preferences(qbit_options)
-        await TorrentManager._auth_qbit()
-
-
-async def update_aria2_options():
-    LOGGER.info("Get aria2 options from server")
-    if not aria2_options:
-        op = await TorrentManager.aria2.getGlobalOption()
-        aria2_options.update(op)
-    else:
-        await TorrentManager.aria2.changeGlobalOption(aria2_options)
-
-
-async def update_nzb_options():
-    if Config.DISABLE_NZB or not Config.USENET_SERVERS:
-        return
-    LOGGER.info("Get SABnzbd options from server")
-    retries = 10
-    for i in range(retries):
-        try:
-            no = (await sabnzbd_client.get_config())["config"]["misc"]
-            nzb_options.update(no)
-            break
-        except Exception as e:
-            if i == retries - 1:
-                LOGGER.error(
-                    f"Failed to get SABnzbd options after {retries} retries: {e}"
-                )
-                return
-            LOGGER.warning(f"SABnzbd not ready, retrying ({i + 1}/{retries}): {e}")
-            await sleep(2)
 
 
 async def load_settings():
@@ -187,63 +120,6 @@ async def load_settings():
                     async with aiopen(file_, "wb+") as f:
                         await f.write(value)
 
-        if a2c_options:
-            aria2_options.update(a2c_options)
-
-        if qbit_opt:
-            qbit_options.update(qbit_opt)
-
-        if nzb_opt:
-            if await aiopath.exists("configs/sabnzbd/SABnzbd.ini.bak"):
-                await remove("configs/sabnzbd/SABnzbd.ini.bak")
-            for key, value in nzb_opt.items():
-                if value:
-                    file_ = key.replace("__", ".")
-                    async with aiopen(f"configs/sabnzbd/{file_}", "wb+") as f:
-                        await f.write(value)
-            LOGGER.info("Loaded.. Sabnzbd Data from MongoDB")
-
-        if user_exists:
-            rows = database.db.users[PART].find({})
-            async for row in rows:
-                uid = row["_id"]
-                del row["_id"]
-                paths = {
-                    "THUMBNAIL": f"thumbnails/{uid}.jpg",
-                    "RCLONE_CONFIG": f"rclone/{uid}.conf",
-                    "TOKEN_PICKLE": f"tokens/{uid}.pickle",
-                    "USER_COOKIE_FILE": f"cookies/{uid}/cookies.txt",
-                }
-
-                async def save_file(file_path, content):
-                    dir_path = ospath.dirname(file_path)
-                    if not await aiopath.exists(dir_path):
-                        await makedirs(dir_path)
-                    if file_path.startswith("cookies/") and file_path.endswith(".txt"):
-                        async with aiopen(file_path, "wb") as f:
-                            if isinstance(content, str):
-                                content = content.encode("utf-8")
-                            await f.write(content)
-                    else:
-                        async with aiopen(file_path, "wb+") as f:
-                            if isinstance(content, str):
-                                content = content.encode("utf-8")
-                            await f.write(content)
-
-                for key, path in paths.items():
-                    if row.get(key):
-                        await save_file(path, row[key])
-                        row[key] = path
-                user_data[uid] = row
-            LOGGER.info("Users Data has been imported from MongoDB")
-
-        if rss_exists:
-            rows = database.db.rss[PART].find({})
-            async for row in rows:
-                user_id = row["_id"]
-                del row["_id"]
-                rss_dict[user_id] = row
-            LOGGER.info("RSS data has been imported from MongoDB")
 
 
 async def save_settings():
@@ -259,18 +135,6 @@ async def save_settings():
     await database.db.settings.config.update_one(
         deploy_filter, {"$set": config_file}, upsert=True
     )
-    if await database.db.settings.aria2c.find_one(deploy_filter) is None:
-        await database.db.settings.aria2c.update_one(
-            deploy_filter, {"$set": aria2_options}, upsert=True
-        )
-    if await database.db.settings.qbittorrent.find_one(deploy_filter) is None:
-        await database.save_qbit_settings()
-    if await database.db.settings.nzb.find_one(deploy_filter) is None:
-        async with aiopen("configs/sabnzbd/SABnzbd.ini", "rb+") as pf:
-            nzb_conf = await pf.read()
-        await database.db.settings.nzb.update_one(
-            deploy_filter, {"$set": {"SABnzbd__ini": nzb_conf}}, upsert=True
-        )
 
 
 async def update_variables():
@@ -383,40 +247,5 @@ async def load_configurations():
 
     if not await aiopath.exists("accounts"):
         Config.USE_SERVICE_ACCOUNTS = False
-
-    await TorrentManager.initiate()
-
-    if Config.DISABLE_TORRENTS:
-        LOGGER.info("Torrents are disabled. Skipping qBittorrent initialization.")
-    else:
-        try:
-            await TorrentManager.qbittorrent.app.set_preferences(qbit_options)
-        except Exception as e:
-            LOGGER.error(f"Failed to configure qBittorrent: {e}")
-        await TorrentManager._auth_qbit()
-
-    PORT = getenv("PORT", "") or "8080"
-    if PORT:
-        access_pwd = getenv("WEB_ACCESS_PASSWORD", "") or Config.WEB_ACCESS_PASSWORD
-        if not access_pwd:
-            from secrets import token_bytes
-
-            access_pwd = token_bytes(32).hex()
-            Config.WEB_ACCESS_PASSWORD = access_pwd
-        env = f"WEB_ACCESS_PASSWORD={access_pwd} "
-        bot_loop.create_task(cmd_exec(
-            f"{env}gunicorn -k uvicorn.workers.UvicornWorker -w 1 web.wserver:app --bind 0.0.0.0:{PORT}",
-            shell=True,
-        ))
-        bot_loop.create_task(cmd_exec("python3 cron_boot.py", shell=True))
-
-    if Config.DISABLE_STREAM:
-        LOGGER.info("Streaming is disabled. Skipping stream server.")
-    else:
-        from .stream_server import spawn_stream_server
-
-        spawn_stream_server()
-
-    from ..helper.ext_utils.tunnel_monitor import apply_tunnel_url_once
 
     await apply_tunnel_url_once()

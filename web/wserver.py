@@ -21,9 +21,7 @@ from urllib.parse import urlparse
 from contextlib import asynccontextmanager
 from logging import INFO, WARNING, FileHandler, StreamHandler, basicConfig, getLogger
 
-from aioaria2 import Aria2HttpClient
 from aiohttp.client_exceptions import ClientError
-from aioqbt.client import create_client
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import (
     HTMLResponse,
@@ -32,10 +30,7 @@ from fastapi.responses import (
     StreamingResponse,
 )
 from fastapi.templating import Jinja2Templates
-from sabnzbdapi import SabnzbdClient
-from aioqbt.exc import AQError
 
-from web.nodes import extract_file_ids, make_tree
 from aiohttp import ClientSession
 
 getLogger("niquests").setLevel(WARNING)
@@ -171,17 +166,6 @@ def _verify_pin(gid, pin):
     )
 
 
-aria2 = None
-qbittorrent = None
-sabnzbd_client = SabnzbdClient(
-    host="http://localhost",
-    api_key=_service_pwd("sabnzbd"),
-    port="8070",
-)
-SERVICES = {
-    "nzb": {"url": "http://localhost:8070/", "password": _service_pwd("sabnzbd")},
-    "qbit": {"url": "http://localhost:8090", "password": _service_pwd("qbit")},
-}
 
 
 STREAM_PORT = environ.get("STREAM_PORT", "") or "8091"
@@ -215,221 +199,6 @@ def _client_ip(request: Request):
         return fwd.split(",")[0].strip()[:64]
     return (request.client.host if request.client else "unknown")[:64]
 
-
-async def re_verify(paused, resumed, hash_id):
-    k = 0
-    while True:
-        res = await qbittorrent.torrents.files(hash_id)
-        verify = True
-        for i in res:
-            if i.index in paused and i.priority != 0:
-                verify = False
-                break
-            if i.index in resumed and i.priority == 0:
-                verify = False
-                break
-        if verify:
-            break
-        LOGGER.info("Reverification Failed! Correcting stuff...")
-        await sleep(0.5)
-        if paused:
-            try:
-                await qbittorrent.torrents.file_prio(
-                    hash=hash_id, id=paused, priority=0
-                )
-            except (ClientError, TimeoutError, Exception, AQError) as e:
-                LOGGER.error(f"{e} Errored in reverification paused!")
-        if resumed:
-            try:
-                await qbittorrent.torrents.file_prio(
-                    hash=hash_id, id=resumed, priority=1
-                )
-            except (ClientError, TimeoutError, Exception, AQError) as e:
-                LOGGER.error(f"{e} Errored in reverification resumed!")
-        k += 1
-        if k > 5:
-            return False
-    LOGGER.info(f"Verified! Hash: {hash_id}")
-    return True
-
-
-@app.get("/app/files", response_class=HTMLResponse)
-async def files(request: Request):
-    response = templates.TemplateResponse(request, "page.html")
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Pragma"] = "no-cache"
-    response.headers["Expires"] = "0"
-    return response
-
-
-@app.api_route(
-    "/app/files/torrent", methods=["GET", "POST"], response_class=HTMLResponse
-)
-async def handle_torrent(request: Request):
-    params = request.query_params
-
-    if not (gid := params.get("gid")):
-        return JSONResponse(
-            {
-                "files": [],
-                "engine": "",
-                "error": "GID is missing",
-                "message": "GID not specified",
-            }
-        )
-
-    if not _SAFE_GID.match(gid):
-        return JSONResponse(
-            {
-                "files": [],
-                "engine": "",
-                "error": "Invalid GID",
-                "message": "Invalid GID",
-            }
-        )
-
-    if not (pin := params.get("pin")):
-        return JSONResponse(
-            {
-                "files": [],
-                "engine": "",
-                "error": "Pin is missing",
-                "message": "PIN not specified",
-            }
-        )
-
-    if _pin_rate_limited(gid):
-        return JSONResponse(
-            {
-                "files": [],
-                "engine": "",
-                "error": "Too many attempts",
-                "message": f"Too many PIN attempts. Try again in {_PIN_RATE_WINDOW}s.",
-            },
-            status_code=429,
-        )
-
-    if not _verify_pin(gid, pin):
-        _record_pin_attempt(gid)
-        return JSONResponse(
-            {
-                "files": [],
-                "engine": "",
-                "error": "Invalid pin",
-                "message": "The PIN you entered is incorrect. Try Again!",
-            }
-        )
-    _pin_attempts.pop(gid, None)
-
-    if request.method == "POST":
-        if not (mode := params.get("mode")):
-            return JSONResponse(
-                {
-                    "files": [],
-                    "engine": "",
-                    "error": "Mode is not specified",
-                    "message": "Mode is not specified",
-                }
-            )
-        data = await request.json()
-        if mode == "rename":
-            if len(gid) > 20:
-                await handle_rename(gid, data)
-                content = {
-                    "files": [],
-                    "engine": "",
-                    "error": "",
-                    "message": "Rename successfully.",
-                }
-            else:
-                content = {
-                    "files": [],
-                    "engine": "",
-                    "error": "Rename failed.",
-                    "message": "Cannot rename aria2c torrent file",
-                }
-        else:
-            selected_files, unselected_files = extract_file_ids(data)
-            if gid.startswith("SABnzbd_nzo"):
-                await set_sabnzbd(gid, unselected_files)
-            elif len(gid) > 20:
-                await set_qbittorrent(gid, selected_files, unselected_files)
-            else:
-                selected_files = ",".join(selected_files)
-                await set_aria2(gid, selected_files)
-            content = {
-                "files": [],
-                "engine": "",
-                "error": "",
-                "message": "Your selection has been submitted successfully.",
-            }
-    else:
-        try:
-            if gid.startswith("SABnzbd_nzo"):
-                res = await sabnzbd_client.get_files(gid)
-                content = make_tree(res, "sabnzbd")
-            elif len(gid) > 20:
-                res = await qbittorrent.torrents.files(gid)
-                content = make_tree(res, "qbittorrent")
-            else:
-                res = await aria2.getFiles(gid)
-                op = await aria2.getOption(gid)
-                fpath = f"{op['dir']}/"
-                content = make_tree(res, "aria2", fpath)
-        except (ClientError, TimeoutError, Exception, AQError) as e:
-            LOGGER.error(str(e))
-            content = {
-                "files": [],
-                "engine": "",
-                "error": "Error getting files",
-                "message": str(e),
-            }
-    return JSONResponse(content)
-
-
-async def handle_rename(gid, data):
-    try:
-        _type = data["type"]
-        del data["type"]
-        if _type == "file":
-            await qbittorrent.torrents.rename_file(hash=gid, **data)
-        else:
-            await qbittorrent.torrents.rename_folder(hash=gid, **data)
-    except (ClientError, TimeoutError, Exception, AQError) as e:
-        LOGGER.error(f"{e} Errored in renaming")
-
-
-async def set_sabnzbd(gid, unselected_files):
-    await sabnzbd_client.remove_file(gid, unselected_files)
-    LOGGER.info(f"Verified! nzo_id: {gid}")
-
-
-async def set_qbittorrent(gid, selected_files, unselected_files):
-    if unselected_files:
-        try:
-            await qbittorrent.torrents.file_prio(
-                hash=gid, id=unselected_files, priority=0
-            )
-        except (ClientError, TimeoutError, Exception, AQError) as e:
-            LOGGER.error(f"{e} Errored in paused")
-    if selected_files:
-        try:
-            await qbittorrent.torrents.file_prio(
-                hash=gid, id=selected_files, priority=1
-            )
-        except (ClientError, TimeoutError, Exception, AQError) as e:
-            LOGGER.error(f"{e} Errored in resumed")
-    await sleep(0.5)
-    if not await re_verify(unselected_files, selected_files, gid):
-        LOGGER.error(f"Verification Failed! Hash: {gid}")
-
-
-async def set_aria2(gid, selected_files):
-    res = await aria2.changeOption(gid, {"select-file": selected_files})
-    if res == "OK":
-        LOGGER.info(f"Verified! Gid: {gid}")
-    else:
-        LOGGER.info(f"Verification Failed! Report! Gid: {gid}")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -527,16 +296,6 @@ async def protected_proxy(
     return response
 
 
-@app.api_route("/nzb/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def sabnzbd_proxy(path: str = "", request: Request = None):
-    return await protected_proxy("nzb", path, request)
-
-
-@app.api_route("/qbit/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def qbittorrent_proxy(path: str = "", request: Request = None):
-    return await protected_proxy("qbit", path, request)
-
-
 _HOP = (
     "connection",
     "keep-alive",
@@ -606,6 +365,7 @@ async def stream_proxy(
             upstream.release()
 
     return StreamingResponse(_pump(), status_code=upstream.status, headers=out)
+
 
 
 @app.api_route("/stream/{token}", methods=["GET", "HEAD"])

@@ -28,13 +28,9 @@ from ..helper.ext_utils.task_manager import (
 )
 from ..helper.ext_utils.status_utils import get_readable_file_size
 from ..helper.listeners.task_listener import TaskListener
-from ..helper.mirror_leech_utils.download_utils.direct_link_generator import (
-    direct_link_generator,
-)
 from ..helper.mirror_leech_utils.gdrive_utils.clone import GoogleDriveClone
 from ..helper.mirror_leech_utils.gdrive_utils.count import GoogleDriveCount
 from ..helper.mirror_leech_utils.rclone_utils.transfer import RcloneTransferHelper
-from ..helper.mirror_leech_utils.upload_utils.mega_clone import add_mega_clone
 from ..helper.mirror_leech_utils.status_utils.gdrive_status import GoogleDriveStatus
 from ..helper.mirror_leech_utils.status_utils.rclone_status import RcloneStatus
 from ..helper.telegram_helper.message_utils import (
@@ -132,77 +128,7 @@ class Clone(TaskListener):
             )
             await delete_links(self.message)
             return
-        if is_mega_link(self.link) and self.up_dest not in ("mega", "mega:"):
-            self.up_dest = "mega:"
-        LOGGER.info(self.link)
-        try:
-            await self.before_start()
-        except Exception as e:
-            await send_message(self.message, e)
-            await delete_links(self.message)
-            return
-
-        self._set_mode_engine()
-
-        await self._proceed_to_clone(sync)
-        await delete_links(self.message)
-
-    async def _proceed_to_clone(self, sync):
-        if is_share_link(self.link):
-            try:
-                self.link = await sync_to_async(direct_link_generator, self.link)
-                LOGGER.info(f"Generated link: {self.link}")
-            except DirectDownloadLinkException as e:
-                LOGGER.error(str(e))
-                if str(e).startswith("ERROR:"):
-                    await send_message(self.message, str(e))
-                    return
-        if is_gdrive_link(self.link) or is_gdrive_id(self.link):
-            self.name, mime_type, self.size, files, _ = await sync_to_async(
-                GoogleDriveCount().count, self.link, self.user_id
-            )
-            if mime_type is None:
-                await send_message(self.message, self.name)
-                return
-            msg, button = await stop_duplicate_check(self)
-            if msg:
-                await send_message(self.message, msg, button)
-                return
-            if limit_exceeded := await limit_checker(self):
-                await send_message(
-                    self.message,
-                    f"""〶 <b><i><u>Limit Breached:</u></i></b>
-│
-┟ <b>Task Size</b> → {get_readable_file_size(self.size)}
-┠ <b>In Mode</b> → {self.mode[0]}
-┠ <b>Out Mode</b> → {self.mode[1]}
-{limit_exceeded}""",
-                )
-                return
-            await self.on_download_start()
-            LOGGER.info(f"Clone Started: Name: {self.name} - Source: {self.link}")
-            drive = GoogleDriveClone(self)
-            if files <= 10:
-                msg = await send_message(
-                    self.message, f"Cloning: <code>{self.link}</code>"
-                )
-            else:
-                msg = ""
-                gid = token_hex(5)
-                async with task_dict_lock:
-                    task_dict[self.mid] = GoogleDriveStatus(self, drive, gid, "cl")
-                if self.multi <= 1:
-                    await send_status_message(self.message)
-            flink, mime_type, files, folders, dir_id = await sync_to_async(drive.clone)
-            if msg:
-                await delete_message(msg)
-            if not flink:
-                return
-            await self.on_upload_complete(
-                flink, files, folders, mime_type, dir_id=dir_id
-            )
-            LOGGER.info(f"Cloning Done: {self.name}")
-        elif is_rclone_path(self.link):
+        if is_rclone_path(self.link):
             if self.link.startswith("mrcc:"):
                 self.link = self.link.replace("mrcc:", "", 1)
                 self.up_dest = self.up_dest.replace("mrcc:", "", 1)

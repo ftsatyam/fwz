@@ -63,14 +63,6 @@ commands = {
     "aiohttp": (["uv", "pip", "show", "aiohttp"], r"Version: ([\d.]+)"),
     "wzgram": (["uv", "pip", "show", "wzgram"], r"Version: ([\d.]+)"),
     "gapi": (["uv", "pip", "show", "google-api-python-client"], r"Version: ([\d.]+)"),
-    "mega": (
-        [
-            "python3",
-            "-c",
-            "from mega import MegaApi; print(MegaApi('test').getVersion())",
-        ],
-        r"v?([\d.]+)",
-    ),
 }
 
 
@@ -331,18 +323,6 @@ async def get_version_async(command, regex, timeout=5):
         return f"Exception: {str(e)}"
 
 
-async def retry_mega_version():
-    await sleep(60)
-    command, regex = commands["mega"]
-    version = await get_version_async(command, regex, timeout=10)
-    if version != "Timeout" and not version.startswith("Exception"):
-        bot_cache["eng_versions"]["mega"] = version
-        LOGGER.info(f"MegaSDK Version Fetched: {version}")
-    else:
-        LOGGER.warning(f"Failed to fetch MegaSDK Version: {version}")
-
-
-@new_task
 async def get_packages_version():
     tasks = [get_version_async(command, regex) for command, regex in commands.values()]
     versions = await gather(*tasks)

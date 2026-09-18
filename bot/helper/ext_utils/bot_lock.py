@@ -157,38 +157,7 @@ class SmartLock:
         return False
 
     async def _pause(self, targets):
-        for t in targets:
-            try:
-                if t == "nzb" and not Config.DISABLE_NZB:
-                    from ... import sabnzbd_client
-
-                    if sabnzbd_client.LOGGED_IN:
-                        await sabnzbd_client.pause_all()
-                elif t == "jd" and not Config.DISABLE_JD:
-                    from ...core.jdownloader_booter import jdownloader
-
-                    if jdownloader.is_connected:
-                        await jdownloader.device.downloadcontroller.stop_downloads()
-            except (ConnectionError, TimeoutError, OSError):
-                pass
+        return
 
     async def _resume(self, targets):
-        for t in targets:
-            try:
-                if t == "nzb" and not Config.DISABLE_NZB:
-                    from ... import sabnzbd_client
-
-                    if sabnzbd_client.LOGGED_IN:
-                        await sabnzbd_client.resume_all()
-                elif t == "jd" and not Config.DISABLE_JD:
-                    from ...core.jdownloader_booter import jdownloader
-
-                    if jdownloader.is_connected:
-                        await jdownloader.device.downloadcontroller.start_downloads()
-            except (ConnectionError, TimeoutError, OSError):
-                pass
-
-
-ff_lock = SmartLock(pause_targets=["nzb", "jd"], max_slots=1)
-sab_par2_lock = SmartLock(pause_targets=["jd"])
-jd_heavy_lock = SmartLock(pause_targets=["nzb"])
+        return

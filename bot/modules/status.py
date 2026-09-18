@@ -14,8 +14,6 @@ from .. import (
     DOWNLOAD_DIR,
 )
 from ..core.config_manager import Config
-from ..core.torrent_manager import TorrentManager
-from ..core.jdownloader_booter import jdownloader
 from ..helper.ext_utils.bot_utils import new_task
 from ..helper.ext_utils.status_utils import (
     EngineStatus,

@@ -26,7 +26,6 @@ from time import time
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from .core.config_manager import Config
-from sabnzbdapi import SabnzbdClient
 
 getLogger("niquests").setLevel(WARNING)
 getLogger("pyrogram").setLevel(ERROR)
@@ -91,50 +90,5 @@ jd_listener_lock = Lock()
 same_directory_lock = Lock()
 
 
-def _sabnzbd_key():
-    from bot.helper.ext_utils.bot_utils import derive_service_password
-
-    return derive_service_password(
-        (Config.BOT_TOKEN or "").split(":", 1)[0] or "0",
-        "sabnzbd",
-    )
-
-
-def _update_sabnzbd_ini(api_key):
-    from re import compile as _re, MULTILINE
-
-    pat_key = _re(r"^api_key\s*=.*$", MULTILINE)
-    pat_pwd = _re(r"^password\s*=.*$", MULTILINE)
-    try:
-        with open("configs/sabnzbd/SABnzbd.ini", "r+") as f:
-            content = f.read()
-            new = content
-            new = pat_key.sub(f"api_key = {api_key}", new)
-            new = pat_pwd.sub(f"password = {api_key}", new)
-            if new == content:
-                return
-            f.seek(0)
-            f.truncate()
-            f.write(new)
-            LOGGER.info("SABnzbd.ini Updated with derived api_key")
-    except FileNotFoundError:
-        LOGGER.warning("SABnzbd.ini not found, skipping patch")
-    except Exception as e:
-        LOGGER.error(f"SABnzbd.ini patch failed: {e}")
-
-
-if not Config.WEB_ACCESS_PASSWORD:
-    from secrets import token_hex
-
-    Config.WEB_ACCESS_PASSWORD = token_hex(32)
-
-_sabnzbd_api_key = _sabnzbd_key()
-
-sabnzbd_client = SabnzbdClient(
-    host="http://localhost",
-    api_key=_sabnzbd_api_key,
-    port="8070",
-    RETRIES=1,
-)
 
 scheduler = AsyncIOScheduler(event_loop=bot_loop)

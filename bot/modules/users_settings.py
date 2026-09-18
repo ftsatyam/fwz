@@ -17,7 +17,6 @@ from pyrogram.handlers import MessageHandler
 
 from .. import auth_chats, excluded_extensions, sudo_users, user_data
 from ..core.config_manager import Config
-from ..core.seedr_client import SeedrClient
 from ..core.tg_client import TgClient
 from ..helper.ext_utils.bot_utils import (
     get_size_bytes,
@@ -25,7 +24,6 @@ from ..helper.ext_utils.bot_utils import (
     update_user_ldata,
 )
 from ..helper.ext_utils.db_handler import database
-from ..helper.ext_utils.mega_utils import get_mega_account_info
 from ..helper.ext_utils.media_utils import create_thumb
 from ..helper.ext_utils.status_utils import get_readable_file_size
 from ..helper.telegram_helper.button_build import ButtonMaker

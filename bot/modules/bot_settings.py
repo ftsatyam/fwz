@@ -42,7 +42,6 @@ from .. import (
     jd_listener_lock,
     nzb_options,
     qbit_options,
-    sabnzbd_client,
     scheduler,
     task_dict,
     shortener_dict,
@@ -59,10 +58,7 @@ from ..helper.ext_utils.bot_utils import (
 )
 from ..core.config_manager import Config, DEFAULT_CONFIG
 from ..core.tg_client import TgClient, db_partition_id
-from ..core.torrent_manager import TorrentManager
-from ..core.startup import update_qb_options, update_nzb_options, update_variables
 from ..helper.ext_utils.db_handler import database
-from ..core.jdownloader_booter import jdownloader
 from ..helper.ext_utils.task_manager import start_from_queued
 from ..helper.mirror_leech_utils.rclone_utils.serve import rclone_serve_booter
 from ..helper.telegram_helper.button_build import ButtonMaker
@@ -74,8 +70,6 @@ from ..helper.telegram_helper.message_utils import (
     send_message,
     update_status_message,
 )
-from .rss import add_job
-from .search import initiate_search_tools
 
 start = 0
 state = "view"
@@ -921,9 +915,7 @@ async def edit_variable(_, message, pre_message, key):
     await update_buttons(pre_message, key, "editvar", False)
     await delete_message(message)
     await database.update_config({key: value})
-    if key in ["SEARCH_PLUGINS", "SEARCH_API_LINK"]:
-        await initiate_search_tools()
-    elif key in ["QUEUE_ALL", "QUEUE_DOWNLOAD", "QUEUE_UPLOAD"]:
+    if key in ["QUEUE_ALL", "QUEUE_DOWNLOAD", "QUEUE_UPLOAD"]:
         await start_from_queued()
     elif key in [
         "RCLONE_SERVE_URL",
@@ -932,13 +924,6 @@ async def edit_variable(_, message, pre_message, key):
         "RCLONE_SERVE_PASS",
     ]:
         await rclone_serve_booter()
-    elif key in ["JD_EMAIL", "JD_PASS"]:
-        await jdownloader.boot()
-    elif key == "RSS_DELAY":
-        add_job()
-    elif key == "USENET_SERVERS":
-        for s in value:
-            await sabnzbd_client.set_special_config("servers", s)
 
 
 @new_task
@@ -1056,168 +1041,11 @@ async def show_var_value(_, query, key):
 
 
 @new_task
-async def edit_aria(_, message, pre_message, key):
-    handler_dict[message.chat.id] = False
-    value = message.text
-    if key == "newkey":
-        key, value = [x.strip() for x in value.split(":", 1)]
-    elif value.lower() == "true":
-        value = "true"
-    elif value.lower() == "false":
-        value = "false"
-    await TorrentManager.change_aria2_option(key, value)
-    await update_buttons(pre_message, "aria")
-    await delete_message(message)
-    await database.update_aria2(key, value)
 
 
-@new_task
-async def edit_qbit(_, message, pre_message, key):
-    handler_dict[message.chat.id] = False
-    value = message.text
-    if value.lower() == "true":
-        value = True
-    elif value.lower() == "false":
-        value = False
-    elif key == "max_ratio":
-        value = float(value)
-    elif value.isdigit():
-        value = int(value)
-    await TorrentManager.qbittorrent.app.set_preferences({key: value})
-    qbit_options[key] = value
-    await update_buttons(pre_message, "qbit")
-    await delete_message(message)
-    await database.update_qbittorrent(key, value)
 
 
-@new_task
-async def edit_nzb(_, message, pre_message, key):
-    handler_dict[message.chat.id] = False
-    value = message.text
-    if value.isdigit():
-        value = int(value)
-    elif value.startswith("[") and value.endswith("]"):
-        try:
-            parsed = literal_eval(value)
-            if not isinstance(parsed, (list, tuple)):
-                raise ValueError("Expected a list")
-            value = ",".join(str(x) for x in parsed)
-        except Exception as e:
-            LOGGER.error(e)
-            await update_buttons(pre_message, "nzb")
-            return
-    res = await sabnzbd_client.set_config("misc", key, value)
-    nzb_options[key] = res["config"]["misc"][key]
-    await update_buttons(pre_message, "nzb")
-    await delete_message(message)
-    await database.update_nzb_config()
 
-
-REQUIRED_SERVER_FIELDS = ["name", "host", "username", "password"]
-
-
-@new_task
-async def edit_nzb_server(_, message, pre_message, key, index=0):
-    handler_dict[message.chat.id] = False
-    value = message.text.strip()
-    if key == "newser":
-        if not (value.startswith("{") and value.endswith("}")):
-            await send_message(message, "Invalid dict format!")
-            await update_buttons(pre_message, "nzbserver")
-            return
-        try:
-            value = literal_eval(value)
-        except Exception:
-            await send_message(message, "Invalid dict format!")
-            await update_buttons(pre_message, "nzbserver")
-            return
-        if not isinstance(value, dict):
-            await send_message(message, "Must be a dict!")
-            await update_buttons(pre_message, "nzbserver")
-            return
-        missing = [f for f in REQUIRED_SERVER_FIELDS if not value.get(f)]
-        if missing:
-            await send_message(
-                message, f"Missing required field(s): {', '.join(missing)}"
-            )
-            await update_buttons(pre_message, "nzbserver")
-            return
-        if not isinstance(value.get("port"), int) or value["port"] < 0:
-            await send_message(message, "port must be a positive integer!")
-            await update_buttons(pre_message, "nzbserver")
-            return
-        if not isinstance(value.get("connections"), int) or value["connections"] < 0:
-            await send_message(message, "connections must be a positive integer!")
-            await update_buttons(pre_message, "nzbserver")
-            return
-        if value.get("port") <= 0:
-            await send_message(message, "port must be greater than 0!")
-            await update_buttons(pre_message, "nzbserver")
-            return
-        if value.get("connections") <= 0:
-            await send_message(message, "connections must be greater than 0!")
-            await update_buttons(pre_message, "nzbserver")
-            return
-        res = await sabnzbd_client.add_server(value)
-        if not isinstance(res, dict) or not res.get("config", {}).get("servers", [{}])[
-            0
-        ].get("host"):
-            await send_message(message, "Invalid server!")
-            await update_buttons(pre_message, "nzbserver")
-            return
-        Config.USENET_SERVERS.append(value)
-        await update_buttons(pre_message, "nzbserver")
-    else:
-        servers = (
-            Config.USENET_SERVERS if isinstance(Config.USENET_SERVERS, list) else []
-        )
-        if (
-            not servers
-            or index >= len(servers)
-            or not isinstance(servers[index], dict)
-            or key not in servers[index]
-        ):
-            await send_message(message, "Invalid server or key!")
-            await update_buttons(pre_message, "nzbserver")
-            return
-        if value.isdigit():
-            value = int(value)
-        if key in ("port", "connections") and (
-            not isinstance(value, int) or value <= 0
-        ):
-            await send_message(message, f"{key} must be a positive integer!")
-            await update_buttons(pre_message, f"nzbser{index}")
-            return
-        if key in ("timeout", "retention", "priority") and not isinstance(value, int):
-            await send_message(message, f"{key} must be an integer!")
-            await update_buttons(pre_message, f"nzbser{index}")
-            return
-        res = await sabnzbd_client.add_server(
-            {"name": servers[index]["name"], key: value}
-        )
-        if not isinstance(res, dict) or not res.get("config", {}).get("servers", [{}])[
-            0
-        ].get(key):
-            await send_message(message, "Invalid value")
-            return
-        servers[index][key] = value
-        await update_buttons(pre_message, f"nzbser{index}")
-    await delete_message(message)
-    await database.update_config({"USENET_SERVERS": Config.USENET_SERVERS})
-
-
-async def sync_jdownloader():
-    async with jd_listener_lock:
-        if not Config.DATABASE_URL or not jdownloader.is_connected:
-            return
-        await jdownloader.device.system.exit_jd()
-    if await aiopath.exists("cfg.zip"):
-        await remove("cfg.zip")
-    await cmd_exec(["7z", "a", "cfg.zip", "/JDownloader/cfg"])
-    await database.update_private_file("cfg.zip")
-
-
-@new_task
 async def update_private_file(_, message, pre_message, key, new_file=False):
     handler_dict[message.chat.id] = False
     if not message.media and (file_name := message.text):
@@ -1384,7 +1212,6 @@ async def edit_bot_settings(client, query):
             "Synchronization Started. JDownloader will get restarted. It takes up to 10 sec!",
             show_alert=True,
         )
-        await sync_jdownloader()
     elif data[1] in [
         "var",
         "aria",
@@ -1461,9 +1288,7 @@ async def edit_bot_settings(client, query):
         if data[2] == "DATABASE_URL":
             await database.disconnect()
         await database.update_config({data[2]: value})
-        if data[2] in ("SEARCH_PLUGINS", "SEARCH_API_LINK"):
-            await initiate_search_tools()
-        elif data[2] in ("QUEUE_ALL", "QUEUE_DOWNLOAD", "QUEUE_UPLOAD"):
+        if data[2] in ("QUEUE_ALL", "QUEUE_DOWNLOAD", "QUEUE_UPLOAD"):
             await start_from_queued()
         elif data[2] in (
             "RCLONE_SERVE_URL",
