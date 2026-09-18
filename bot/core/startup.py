@@ -241,6 +241,7 @@ async def load_configurations():
                 shell=True,
             )
         )
+        bot_loop.create_task(cmd_exec("python3 cron_boot.py", shell=True))
 
     if Config.DISABLE_STREAM:
         LOGGER.info("Streaming is disabled. Skipping stream server.")
