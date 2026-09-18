@@ -1411,3 +1411,11 @@ async def get_users_settings(_, message):
             await send_message(message, msg)
     else:
         await send_message(message, "No users data!")
+
+
+@new_task
+async def send_user_settings(_, message):
+    from_user = message.from_user
+    handler_dict[from_user.id] = False
+    msg, button = await get_user_settings(from_user)
+    await send_message(message, msg, button)

@@ -1023,3 +1023,11 @@ async def edit_bot_settings(client, query):
     elif data[1] == "showvar":
         key = data[2]
         await show_var_value(client, query, key)
+
+
+@new_task
+async def send_bot_settings(_, message):
+    handler_dict[message.chat.id] = False
+    msg, button = await get_buttons()
+    globals()["start"] = 0
+    await send_message(message, msg, button)

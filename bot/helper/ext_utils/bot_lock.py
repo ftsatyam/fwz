@@ -161,3 +161,7 @@ class SmartLock:
 
     async def _resume(self, targets):
         return
+
+
+# Shared lock for FFmpeg/media processing.
+ff_lock = SmartLock(max_slots=1)
