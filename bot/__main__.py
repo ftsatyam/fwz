@@ -134,14 +134,6 @@ from .helper.ext_utils.tunnel_monitor import start_tunnel_monitor
 
 start_tunnel_monitor()
 
-from .core.plugin_manager import get_plugin_manager
-from .modules.plugin_manager import register_plugin_commands
-
-plugin_manager = get_plugin_manager()
-plugin_manager.bot = TgClient.bot
-register_plugin_commands()
-bot_loop.run_until_complete(plugin_manager.boot())
-
 from .helper.ext_utils.mem_guard import monitor as memory_monitor
 
 memory_monitor.start()

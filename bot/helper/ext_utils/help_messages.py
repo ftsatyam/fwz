@@ -341,8 +341,6 @@ PASSWORD_ERROR_MESSAGE = """
 
 
 def get_bot_commands():
-    from ...core.plugin_manager import get_plugin_manager
-
     static_commands = {
         "Mirror": "[link/file] Mirror to Upload Destination",
         "UpHoster": "[link/file] Upload to DDL Servers",
@@ -366,16 +364,6 @@ def get_bot_commands():
 
     commands = static_commands.copy()
 
-    plugin_manager = get_plugin_manager()
-    if plugin_manager:
-        for plugin_info in plugin_manager.list_plugins():
-            if plugin_info.enabled and plugin_info.commands:
-                for cmd in plugin_info.commands:
-                    key = cmd.capitalize()
-                    if key not in commands:
-                        commands[key] = (
-                            plugin_info.description or f"Plugin command: {cmd}"
-                        )
 
     return commands
 

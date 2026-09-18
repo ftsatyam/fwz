@@ -26,9 +26,7 @@ class Config:
     DISABLE_BULK = False
     DISABLE_MULTI = False
     DISABLE_FF_MODE = False
-    DISABLE_PLUGINS = False
     DISABLE_STREAM = False
-    PLUGIN_INDEXES = []
     EQUAL_SPLITS = False
     EXCLUDED_EXTENSIONS = ""
     FFMPEG_CMDS = {}

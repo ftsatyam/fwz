@@ -94,7 +94,6 @@ BOOL_VARS = [
     "DISABLE_MIRROR",
     "DISABLE_MULTI",
     "DISABLE_STREAM",
-    "DISABLE_PLUGINS",
     "ENABLE_TELEMETRY",
     "EQUAL_SPLITS",
     "GOFILE_AUTO_CREATE_FOLDER",
@@ -135,7 +134,6 @@ DEFAULT_DESP = {
     "DISABLE_BULK": "Disable bulk (zip/unzip) operations. Default: False.",
     "DISABLE_MULTI": "Disable multi-part splits. Default: False.",
     "DISABLE_FF_MODE": "Disable FFmpeg processing mode. Default: False.",
-    "DISABLE_PLUGINS": "Disable the plugin system. Unloads every plugin and stops loading them at boot. Default: False.",
     "DISABLE_STREAM": "Disable streaming. Stops /stream and the stream server. Default: False.",
     "EQUAL_SPLITS": "Split files into equal parts of LEECH_SPLIT_SIZE. Default: False.",
     "EXCLUDED_EXTENSIONS": "File extensions to exclude from upload/clone. Space-separated.",
@@ -240,7 +238,6 @@ DEFAULT_DESP = {
     "YT_DESP": "Description for YouTube uploads. Default: Uploaded with WZML-X bot.",
     "YT_TAGS": "Tags for YouTube uploads. List format.",
     "YT_CATEGORY_ID": "YouTube video category ID. Default: 22 (People & Blogs).",
-    "PLUGIN_INDEXES": "Extra plugin index URLs on top of the official one. Each must be a JSON file holding a plugins list.",
     "ENABLE_TELEMETRY": "Send crash reports to telemetry.wzmlx.com to help fix bugs. Default: True.",
     "YT_PRIVACY_STATUS": "YouTube upload privacy: public, unlisted, or private.",
 }
@@ -271,7 +268,6 @@ ONOFF_VARS = [
     "DISABLE_BULK",
     "DISABLE_MULTI",
     "DISABLE_FF_MODE",
-    "DISABLE_PLUGINS",
     "DISABLE_STREAM",
 ]
 
@@ -732,13 +728,6 @@ async def _handle_service_toggle(key, disabled):
             await stop_stream_server()
         else:
             spawn_stream_server()
-    elif key == "DISABLE_PLUGINS":
-        from ..core.plugin_manager import get_plugin_manager
-        manager = get_plugin_manager()
-        if disabled:
-            await manager.unload_all()
-        else:
-            await manager.boot()
 
 
 @new_task

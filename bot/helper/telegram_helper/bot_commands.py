@@ -1,5 +1,4 @@
 from ...core.config_manager import Config
-from ...core.plugin_manager import get_plugin_manager
 
 
 class BotCommands:
@@ -43,7 +42,6 @@ class BotCommands:
         "UserSet": ["usetting", "us"],
         "CategorySelect": ["category", "ctsel"],
         "GDClean": ["gdclean", "gdc"],
-        "Plugins": "plugins",
         "Memory": ["memory", "mem"],
     }
 
@@ -53,24 +51,6 @@ class BotCommands:
             key: (list(value) if isinstance(value, list) else value)
             for key, value in cls._static_commands.items()
         }
-        taken = set()
-        for value in commands.values():
-            taken.update(value if isinstance(value, list) else [value])
-
-        plugin_manager = get_plugin_manager()
-        if plugin_manager:
-            for rec in plugin_manager.list_plugins():
-                if not rec.enabled:
-                    continue
-                for primary, names in rec.command_map().items():
-                    fresh = [name for name in names if name not in taken]
-                    if not fresh:
-                        continue
-                    key = primary.capitalize()
-                    if key in commands:
-                        key = f"{rec.name.capitalize()}{key}"
-                    commands[key] = fresh
-                    taken.update(fresh)
 
         return commands
 
