@@ -69,7 +69,6 @@ advanced_options = [
     "EXCLUDED_EXTENSIONS",
     "NAME_SWAP",
     "UPLOAD_PATHS",
-    "USER_COOKIE_FILE",
 ]
 yt_options = ["YT_DESP", "YT_TAGS", "YT_CATEGORY_ID", "YT_PRIVACY_STATUS"]
 
@@ -799,6 +798,124 @@ async def get_user_settings(from_user, stype="main"):
 ┠ <b>Drive Category</b> → <b>{dc_status}</b>
 ┖ <b>Drive Categories:</b> 
    {drive_cat_display}"""
+    elif stype == "ffset":
+        buttons.data_button(
+            "FFmpeg Cmds", f"userset {user_id} menu FFMPEG_CMDS", "header"
+        )
+        if user_dict.get("FFMPEG_CMDS", False):
+            ffc = user_dict["FFMPEG_CMDS"]
+        elif "FFMPEG_CMDS" not in user_dict and Config.FFMPEG_CMDS:
+            ffc = Config.FFMPEG_CMDS
+        else:
+            ffc = "<b>Not Exists</b>"
+
+        if isinstance(ffc, dict):
+            ffc = "\n" + "\n".join(
+                [
+                    f"{no}. <b>{escape(str(key))}</b>: <code>{escape(str(value[0] if isinstance(value, (list, tuple)) and value else value))}</code>"
+                    for no, (key, value) in enumerate(ffc.items(), start=1)
+                ]
+            )
+
+        buttons.data_button("Metadata", f"userset {user_id} menu METADATA")
+        metadata_setting = user_dict.get("METADATA")
+        display_meta_val = "<b>Not Set</b>"
+        if isinstance(metadata_setting, dict) and metadata_setting:
+            display_meta_val = ", ".join(
+                f"{k}={escape(str(v))}" for k, v in metadata_setting.items()
+            )
+            display_meta_val = f"<code>{display_meta_val}</code>"
+        elif isinstance(metadata_setting, str) and metadata_setting:  # Legacy
+            display_meta_val = (
+                f"<code>{escape(metadata_setting)}</code> [<i>Legacy, needs re-set</i>]"
+            )
+
+        buttons.data_button("Audio Metadata", f"userset {user_id} menu AUDIO_METADATA")
+        audio_meta_setting = user_dict.get("AUDIO_METADATA")
+        display_audio_meta = "<b>Not Set</b>"
+        if isinstance(audio_meta_setting, dict) and audio_meta_setting:
+            display_audio_meta = ", ".join(
+                f"{k}={escape(str(v))}" for k, v in audio_meta_setting.items()
+            )
+            display_audio_meta = f"<code>{display_audio_meta}</code>"
+
+        buttons.data_button("Video Metadata", f"userset {user_id} menu VIDEO_METADATA")
+        video_meta_setting = user_dict.get("VIDEO_METADATA")
+        display_video_meta = "<b>Not Set</b>"
+        if isinstance(video_meta_setting, dict) and video_meta_setting:
+            display_video_meta = ", ".join(
+                f"{k}={escape(str(v))}" for k, v in video_meta_setting.items()
+            )
+            display_video_meta = f"<code>{display_video_meta}</code>"
+
+        buttons.data_button(
+            "Subtitle Metadata", f"userset {user_id} menu SUBTITLE_METADATA"
+        )
+        subtitle_meta_setting = user_dict.get("SUBTITLE_METADATA")
+        display_subtitle_meta = "<b>Not Set</b>"
+        if isinstance(subtitle_meta_setting, dict) and subtitle_meta_setting:
+            display_subtitle_meta = ", ".join(
+                f"{k}={escape(str(v))}" for k, v in subtitle_meta_setting.items()
+            )
+            display_subtitle_meta = f"<code>{display_subtitle_meta}</code>"
+
+        buttons.data_button("Back", f"userset {user_id} back", "footer")
+        buttons.data_button(
+            "Close", f"userset {user_id} close", "footer", style=ButtonStyle.DANGER
+        )
+        btns = buttons.build_menu(2)
+
+        text = f"""⌬ <b>FF Settings :</b>
+┟ <b>Name</b> → {user_name}
+┃
+┠ <b>FFmpeg CLI Commands</b> → {ffc}
+┃
+┠ <b>Default Metadata</b> → {display_meta_val}
+┠ <b>Audio Metadata</b> → {display_audio_meta}
+┠ <b>Video Metadata</b> → {display_video_meta}
+┖ <b>Subtitle Metadata</b> → {display_subtitle_meta}"""
+
+    elif stype == "advanced":
+        buttons.data_button(
+            "Excluded Extensions", f"userset {user_id} menu EXCLUDED_EXTENSIONS"
+        )
+        if user_dict.get("EXCLUDED_EXTENSIONS", False):
+            ex_ex = user_dict["EXCLUDED_EXTENSIONS"]
+        elif "EXCLUDED_EXTENSIONS" not in user_dict:
+            ex_ex = excluded_extensions
+        else:
+            ex_ex = "None"
+
+        if ex_ex != "None":
+            ex_ex = ", ".join(ex_ex)
+
+        ns_msg = (
+            f"<code>{swap}</code>"
+            if (swap := user_dict.get("NAME_SWAP", False))
+            else "<b>Not Exists</b>"
+        )
+        buttons.data_button("Name Swap", f"userset {user_id} menu NAME_SWAP")
+
+        if user_dict.get("UPLOAD_PATHS", False):
+            upload_paths = user_dict["UPLOAD_PATHS"]
+        elif "UPLOAD_PATHS" not in user_dict and Config.UPLOAD_PATHS:
+            upload_paths = Config.UPLOAD_PATHS
+        else:
+            upload_paths = "None"
+        buttons.data_button("Upload Paths", f"userset {user_id} menu UPLOAD_PATHS")
+
+        buttons.data_button("Back", f"userset {user_id} back", "footer")
+        buttons.data_button(
+            "Close", f"userset {user_id} close", "footer", style=ButtonStyle.DANGER
+        )
+        btns = buttons.build_menu(2)
+
+        text = f"""⌬ <b>Advanced Settings :</b>
+┟ <b>Name</b> → {user_name}
+┃
+┠ <b>Auto Name Swaps</b> → {ns_msg}
+┠ <b>Excluded Extensions</b> → <code>{ex_ex}</code>
+┖ <b>Upload Paths</b> → <b>{upload_paths}</b>"""
     elif stype == "mirror":
         buttons.data_button("RClone Tools", f"userset {user_id} rclone")
         rccmsg = "Exists" if await aiopath.exists(rclone_conf) else "Not Exists"
@@ -985,11 +1102,10 @@ async def get_menu(option, message, user_id):
         "THUMBNAIL": f"thumbnails/{user_id}.jpg",
         "RCLONE_CONFIG": f"rclone/{user_id}.conf",
         "TOKEN_PICKLE": f"tokens/{user_id}.pickle",
-        "USER_COOKIE_FILE": f"cookies/{user_id}/cookies.txt",
     }
 
     buttons = ButtonMaker()
-    if option in ["THUMBNAIL", "RCLONE_CONFIG", "TOKEN_PICKLE", "USER_COOKIE_FILE"]:
+    if option in ["THUMBNAIL", "RCLONE_CONFIG", "TOKEN_PICKLE"]:
         key = "file"
     else:
         key = "set"
@@ -1163,7 +1279,6 @@ async def edit_user_settings(client, query):
     thumb_path = f"thumbnails/{user_id}.jpg"
     rclone_conf = f"rclone/{user_id}.conf"
     token_pickle = f"tokens/{user_id}.pickle"
-    yt_cookie_path = f"cookies/{user_id}/cookies.txt"
 
     user_dict = user_data.get(user_id, {})
     if user_id != int(data[1]):
@@ -1306,14 +1421,11 @@ async def edit_user_settings(client, query):
             "THUMBNAIL",
             "RCLONE_CONFIG",
             "TOKEN_PICKLE",
-            "USER_COOKIE_FILE",
         ]:
             if data[3] == "THUMBNAIL":
                 fpath = thumb_path
             elif data[3] == "RCLONE_CONFIG":
                 fpath = rclone_conf
-            elif data[3] == "USER_COOKIE_FILE":
-                fpath = yt_cookie_path
             else:
                 fpath = token_pickle
             if await aiopath.exists(fpath):
