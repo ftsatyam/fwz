@@ -1108,6 +1108,12 @@ async def get_menu(option, message, user_id):
     await edit_message(message, text, buttons.build_menu(2))
 
 
+async def update_user_settings(query, stype="main"):
+    handler_dict[query.from_user.id] = False
+    msg, button = await get_user_settings(query.from_user, stype)
+    await edit_message(query.message, msg, button)
+
+
 async def event_handler(client, query, pfunc, rfunc, photo=False, document=False):
     user_id = query.from_user.id
     handler_dict[user_id] = True

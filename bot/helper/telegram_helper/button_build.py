@@ -1,11 +1,9 @@
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, WebAppInfo
-from pyrogram.enums import ButtonStyle
-
 URL_SCHEMES = ("http://", "https://", "tg://")
 
 
 def _btn_style(style=None):
-    return style or ButtonStyle.DEFAULT
+    return {}
 
 
 def valid_url(link):
@@ -38,19 +36,19 @@ class ButtonMaker:
             LOGGER.warning(f"dropping button {key!r} with unusable url {link!r}")
             return
         self.buttons[position if position in self.buttons else "default"].append(
-            InlineKeyboardButton(text=key, url=safe, style=_btn_style(style))
+            InlineKeyboardButton(text=key, url=safe, **_btn_style(style))
         )
 
     def web_app_button(self, key, link, position=None, style=None):
         self.buttons[position if position in self.buttons else "default"].append(
             InlineKeyboardButton(
-                text=key, web_app=WebAppInfo(url=link), style=_btn_style(style)
+                text=key, web_app=WebAppInfo(url=link), **_btn_style(style)
             )
         )
 
     def data_button(self, key, data, position=None, style=None):
         self.buttons[position if position in self.buttons else "default"].append(
-            InlineKeyboardButton(text=key, callback_data=data, style=_btn_style(style))
+            InlineKeyboardButton(text=key, callback_data=data, **_btn_style(style))
         )
 
     def build_menu(self, b_cols=1, h_cols=8, fb_cols=2, lb_cols=2, f_cols=8):
