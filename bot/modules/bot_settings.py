@@ -32,17 +32,12 @@ from pyrogram.handlers import MessageHandler
 
 from .. import (
     LOGGER,
-    aria2_options,
     bot_loop,
     categories_dict,
     drives_ids,
     drives_names,
     index_urls,
     intervals,
-    jd_listener_lock,
-    nzb_options,
-    qbit_options,
-    sabnzbd_client,
     scheduler,
     task_dict,
     shortener_dict,
@@ -59,10 +54,8 @@ from ..helper.ext_utils.bot_utils import (
 )
 from ..core.config_manager import Config, DEFAULT_CONFIG
 from ..core.tg_client import TgClient, db_partition_id
-from ..core.torrent_manager import TorrentManager
-from ..core.startup import update_qb_options, update_nzb_options, update_variables
+from ..core.startup import update_variables
 from ..helper.ext_utils.db_handler import database
-from ..core.jdownloader_booter import jdownloader
 from ..helper.ext_utils.task_manager import start_from_queued
 from ..helper.mirror_leech_utils.rclone_utils.serve import rclone_serve_booter
 from ..helper.telegram_helper.button_build import ButtonMaker
@@ -206,9 +199,7 @@ DEFAULT_DESP = {
     "IS_TEAM_DRIVE": "Set True for TeamDrive uploads. Default: False.",
     "JD_EMAIL": "JDownloader account email for premium downloads.",
     "JD_PASS": "JDownloader account password.",
-    "MEGA_EMAIL": "Mega.nz account email for premium.",
     "MEGA_PASSWORD": "Mega.nz account password.",
-    "SEEDR_EMAIL": "Seedr account email for magnet mirroring.",
     "SEEDR_PASSWORD": "Seedr account password.",
     "SEEDR_DELETE_FOLDER": "Delete folder from Seedr after downloading locally. Default: False.",
     "DIRECT_LIMIT": "Direct link download size limit in GB. 0 = unlimited.",
@@ -296,7 +287,6 @@ DEFAULT_DESP = {
     "USE_SERVICE_ACCOUNTS": "Use Google Service Accounts. Default: False.",
     "WEB_ACCESS_PASSWORD": "Secret for deriving proxy passwords. Set once, use derived passwords in browser. Empty = auto-generated.",
     "WEB_PINCODE": "Ask for pincode in web file selection. Default: True.",
-    "YT_DLP_OPTIONS": "Default yt-dlp options. Format: key:value|key:value.",
     "YT_DESP": "Description for YouTube uploads. Default: Uploaded with WZML-X bot.",
     "YT_TAGS": "Tags for YouTube uploads. List format.",
     "YT_CATEGORY_ID": "YouTube video category ID. Default: 22 (People & Blogs).",
@@ -402,10 +392,6 @@ async def get_buttons(key=None, edit_type=None, edit_mode=False):
         buttons.data_button("Config Variables", "botset var")
         buttons.data_button("Module Settings", "botset setonoff")
         buttons.data_button("Private Files", "botset private open")
-        buttons.data_button("Qbit Settings", "botset qbit")
-        buttons.data_button("Aria2c Settings", "botset aria")
-        buttons.data_button("Sabnzbd Settings", "botset nzb")
-        buttons.data_button("JDownloader Sync", "botset syncjd")
         buttons.data_button("Close", "botset close", style=ButtonStyle.DANGER)
         msg = "Bot Settings:"
     elif edit_type is not None:
