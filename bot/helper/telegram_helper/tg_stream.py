@@ -23,6 +23,43 @@ class NoClientAvailable(Exception):
     pass
 
 
+FULL = object()
+
+
+def parse_range(header, size):
+    if not header:
+        return FULL
+    header = header.strip()
+    if not header.lower().startswith("bytes=") or size <= 0:
+        return FULL if not header.lower().startswith("bytes=") else None
+    spec = header[6:].split(",", 1)[0].strip()
+    if spec.startswith("-"):
+        try:
+            length = int(spec[1:])
+        except ValueError:
+            return None
+        return None if length <= 0 else (max(0, size - length), size - 1)
+    first, _, last = spec.partition("-")
+    try:
+        start = int(first)
+    except ValueError:
+        return None
+    if start < 0 or start >= size:
+        return None
+    if not last:
+        return start, size - 1
+    try:
+        end = int(last)
+    except ValueError:
+        return None
+    return None if end < start else (start, min(end, size - 1))
+
+
+def purge_fid(chat_id, msg_id):
+    for streamer in list(ByteStreamer._instances.values()):
+        streamer._file_id_cache.pop((int(chat_id), int(msg_id)), None)
+
+
 @dataclass(frozen=True)
 class StreamProfile:
     name: str
