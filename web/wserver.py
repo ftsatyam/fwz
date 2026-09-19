@@ -528,6 +528,27 @@ async def tracks_route(token: str, request: Request):
     )
 
 
+@app.get("/api/stream/stats")
+async def stream_stats():
+    try:
+        from Backend.helper.custom_dl import ACTIVE_STREAMS, RECENT_STREAMS
+        from Backend.pyrofork.bot import client_avg_mbps, client_dc_map, client_failures, work_loads
+
+        return JSONResponse(
+            {
+                "active_streams": list(ACTIVE_STREAMS.values()),
+                "recent_streams": list(RECENT_STREAMS),
+                "client_dc_map": client_dc_map,
+                "work_loads": work_loads,
+                "client_failures": client_failures,
+                "client_avg_mbps": client_avg_mbps,
+            }
+        )
+    except Exception as e:
+        LOGGER.warning(f"stream stats unavailable: {e}")
+        return JSONResponse({"active_streams": [], "recent_streams": []}, status_code=503)
+
+
 @app.get("/api/stream/{token}")
 async def stream_meta(token: str, request: Request):
     if not _SAFE_TOKEN.match(token or ""):
